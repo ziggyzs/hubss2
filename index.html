@@ -1,864 +1,2712 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Link Companion Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-                    colors: {
-                        bgMain: '#09090b',
-                        cardBg: '#121214',
-                        cardBorder: '#27272a',
-                        textMuted: '#a1a1aa',
-                        dangerBg: 'rgba(69, 26, 30, 0.4)',
-                        dangerBorder: 'rgba(127, 29, 29, 0.5)',
-                        successBg: 'rgba(20, 51, 35, 0.4)',
-                        successBorder: 'rgba(20, 83, 45, 0.5)'
-                    }
-                }
-            }
-        }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Roboto:wght@100;300;400;500;700&family=Pixelify+Sans:wght@400&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@latest">
     </script>
     <style>
-        * { font-family: 'Inter', system-ui, sans-serif; }
+        :root {
+            --bg: #0b0b0e;
+            --surface: rgba(255, 255, 255, 0.04);
+            --surface2: rgba(255, 255, 255, 0.08);
+            --surface3: rgba(255, 255, 255, 0.12);
+            --border: rgba(255, 255, 255, 0.08);
+            --border2: rgba(255, 255, 255, 0.04);
+            --text: #f1f5f9;
+            --text2: #94a3b8;
+            --text3: #475569;
+            --accent: #3b82f6;
+            --accent2: #60a5fa;
+            --accent3: #93bbfc;
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            --radius: 16px;
+            --font: "Inter", -apple-system, sans-serif;
+            --mono: "Inter", monospace;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         body {
-            background-color: #09090b;
-            background-image: radial-gradient(circle at 80% 20%, #1f1f2e 0%, transparent 50%), radial-gradient(circle at 20% 80%, #15151a 0%, transparent 50%);
-            background-attachment: fixed;
-            min-height: 100vh;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            cursor: default;
+            -webkit-font-smoothing: antialiased;
         }
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #52525b; }
-        
-        .glass {
-            background: rgba(18, 18, 20, 0.6);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(39, 39, 42, 0.5);
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 255, 255, 0.01) 2px, rgba(255, 255, 255, 0.01) 4px);
+            pointer-events: none;
+            z-index: 9999;
         }
-        .glass-light {
-            background: rgba(255, 255, 255, 0.04);
+
+        #wallpaper {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: radial-gradient(ellipse at 20% 30%, #1e293b, #0b0b0e 70%);
+            transition: background 0.6s ease;
+        }
+        .wallpaper-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: linear-gradient(-45deg, #0f172a, #1e1b4b, #0f172a, #1e293b);
+            background-size: 400% 400%;
+            animation: gradientShift 12s ease infinite;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #particles {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            animation: float linear infinite;
+        }
+        .particle:nth-child(1) { left: 10%; top: 20%; animation-duration: 18s; animation-delay: 0s; width: 3px; height: 3px; }
+        .particle:nth-child(2) { left: 25%; top: 60%; animation-duration: 22s; animation-delay: 2s; width: 5px; height: 5px; }
+        .particle:nth-child(3) { left: 45%; top: 10%; animation-duration: 16s; animation-delay: 4s; width: 4px; height: 4px; }
+        .particle:nth-child(4) { left: 60%; top: 70%; animation-duration: 20s; animation-delay: 1s; width: 6px; height: 6px; }
+        .particle:nth-child(5) { left: 80%; top: 30%; animation-duration: 24s; animation-delay: 3s; width: 3px; height: 3px; }
+        .particle:nth-child(6) { left: 15%; top: 85%; animation-duration: 19s; animation-delay: 5s; width: 5px; height: 5px; }
+        .particle:nth-child(7) { left: 50%; top: 50%; animation-duration: 21s; animation-delay: 2s; width: 4px; height: 4px; }
+        .particle:nth-child(8) { left: 70%; top: 15%; animation-duration: 17s; animation-delay: 0s; width: 3px; height: 3px; }
+        .particle:nth-child(9) { left: 35%; top: 40%; animation-duration: 23s; animation-delay: 3s; width: 6px; height: 6px; }
+        .particle:nth-child(10) { left: 90%; top: 65%; animation-duration: 20s; animation-delay: 4s; width: 4px; height: 4px; }
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+            25% { transform: translate(40px, -60px) scale(1.2); opacity: 0.8; }
+            50% { transform: translate(-20px, -120px) scale(0.8); opacity: 0.5; }
+            75% { transform: translate(30px, -180px) scale(1.1); opacity: 0.9; }
+            100% { transform: translate(0, -250px) scale(1); opacity: 0.2; }
+        }
+        #grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        #loading-screen-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: opacity 0.5s ease;
+            pointer-events: auto;
         }
-        
-        .result-row {
+        #loading-screen-overlay.active {
+            display: flex;
+        }
+        #loading-screen-overlay.fading {
             opacity: 0;
-            transform: translateY(8px);
-            animation: fadeInRow 0.35s ease forwards;
+            pointer-events: none;
         }
-        @keyframes fadeInRow {
-            to { opacity: 1; transform: translateY(0); }
+
+        #loading-screen {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #363943;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            border-radius: 0;
+            box-shadow: none;
+            font-family: 'Roboto', sans-serif;
+            transition: opacity 0.5s ease;
+            overflow-y: auto;
         }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 0.15rem 0.6rem;
-            border-radius: 9999px;
-            font-size: 0.6rem;
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #loading-timer {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            color: rgba(255, 102, 0, 0.35);
+            font-family: "Pixelify Sans", monospace;
+            font-size: 14px;
+            font-weight: 400;
+            user-select: none;
+        }
+
+        .ls-content,
+        .gg-content,
+        .sc-content {
+            width: 100%;
+            max-width: 780px;
+            margin: 0 auto;
+        }
+
+        .ls-content {
+            text-align: center;
+        }
+        .ls-content svg {
+            margin-bottom: 16px;
+        }
+        .loading-school-name {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 32px;
+        }
+        .loading-stripe {
+            background: #ff6600;
+            color: #ffffff;
+            width: 100%;
+            padding: 24px 16px;
+            text-align: center;
+            margin-bottom: 16px;
+            border-radius: 4px;
+        }
+        .loading-stripe .top-text {
+            font-size: 14px;
+            color: #ffffff;
+        }
+        .loading-stripe .website {
+            font-size: 30px;
+            color: #ffffff;
+            font-weight: 600;
+            word-break: break-all;
+        }
+        .loading-stripe .bottom-text {
+            font-size: 14px;
+            color: #ffffff;
+        }
+        .loading-system-msg {
+            color: #ff6600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .gg-content {
+            display: none;
+            text-align: center;
+            padding: 20px 0;
+        }
+        .gg-content .gg-outer {
+            display: table;
+            width: 100%;
+            height: 100%;
+        }
+        .gg-content .gg-middle {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        .gg-content .gg-inner {
+            max-width: 32em;
+            margin: 0 auto;
+            padding: 0 20px 260px;
+            text-align: center;
+            color: #c7c7c7;
+            font-size: 1.72em;
+            font-weight: 100;
+            background: url('https://blocked.goguardian.com/assets/lock-icon.png') no-repeat center bottom / 32% auto;
+        }
+        .gg-content .gg-title {
+            font-family: 'Roboto', sans-serif;
+            font-size: 2.5em;
             font-weight: 700;
+            color: #00AAD7;
+            margin: 0 0 20px;
+        }
+        .gg-content .gg-message {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 100;
+            color: #c7c7c7;
+        }
+
+        .sc-content {
+            display: none;
+            width: 100%;
+            max-width: 960px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+        .sc-content .row.top-logo {
+            display: block;
+            text-align: left;
+            margin-bottom: 16px;
+        }
+        .sc-content .row.top-logo img {
+            width: 100px;
+            height: 70px;
+            object-fit: contain;
+        }
+        .sc-content .heading {
+            font-family: 'Roboto', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+            margin: 0 0 4px;
+        }
+        .sc-content .schlblockMessage {
+            font-family: 'Roboto', sans-serif;
+            font-size: 16px;
+            color: #666;
+            text-align: center;
+            margin: 0 0 24px;
+        }
+        .sc-content .row.content-row {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .sc-content .col-md-7 {
+            flex: 0 0 calc(58.333% - 12px);
+            min-width: 280px;
+        }
+        .sc-content .col-md-5 {
+            flex: 0 0 calc(41.667% - 12px);
+            min-width: 240px;
+        }
+        .sc-content .lhs-img-container {
+            text-align: center;
+        }
+        .sc-content .lhs-img-container img {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        .sc-content .block-details {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px 24px;
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            color: #555;
+        }
+        .sc-content .details-heading {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin: 0 0 12px;
+        }
+        .sc-content .regularBody,
+        .sc-content .details {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .sc-content .details:last-child {
+            border-bottom: none;
+        }
+        .sc-content .details span:first-child,
+        .sc-content .regularBody span:first-child {
+            font-weight: 600;
+            color: #333;
+        }
+
+        #loading-screen-overlay.goguardian-theme #loading-screen {
+            background: radial-gradient(ellipse at center, #707070 13%, #333333 100%);
+        }
+        #loading-screen-overlay.goguardian-theme .ls-content {
+            display: none;
+        }
+        #loading-screen-overlay.goguardian-theme .gg-content {
+            display: block;
+        }
+        #loading-screen-overlay.securly-theme #loading-screen {
+            background: #fff;
+        }
+        #loading-screen-overlay.securly-theme .ls-content {
+            display: none;
+        }
+        #loading-screen-overlay.securly-theme .gg-content {
+            display: none;
+        }
+        #loading-screen-overlay.securly-theme .sc-content {
+            display: block;
+        }
+
+        @media (max-width: 700px) {
+            .sc-content .row.content-row { flex-direction: column; }
+            .sc-content .col-md-7, .sc-content .col-md-5 { flex: 1 1 auto; min-width: 0; }
+            .gg-content .gg-inner { padding-bottom: 180px; background-size: 28% auto; }
+            .loading-stripe .website { font-size: 22px; }
+        }
+        @media (max-width: 480px) {
+            .gg-content .gg-inner { font-size: 1.2em; padding-bottom: 140px; background-size: 24% auto; }
+            .gg-content .gg-title { font-size: 1.8em; }
+            .sc-content .heading { font-size: 22px; }
+            #loading-screen { padding: 24px 12px; }
+            .loading-stripe { padding: 16px 12px; }
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+
+        #menubar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 36px;
+            background: rgba(11, 11, 14, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            z-index: 5000;
+            gap: 2px;
+        }
+        .mb-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 12px;
+        }
+        .mb-logo img {
+            width: 18px;
+            height: 18px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: var(--accent);
+        }
+        .mb-logo-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+        .mb-item {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text2);
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+            font-weight: 500;
+        }
+        .mb-item:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+        .mb-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .mb-right svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--text2);
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .mb-right svg:hover {
+            stroke: var(--text);
+        }
+        #mb-clock {
+            font-size: 13px;
+            color: var(--text2);
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .mb-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: rgba(20, 20, 26, 0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 6px;
+            min-width: 180px;
+            box-shadow: var(--shadow);
+            z-index: 6000;
+        }
+        .mb-item:hover .mb-dropdown { display: block; }
+        .dd-item {
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text2);
+            cursor: pointer;
+            transition: 0.12s;
+            font-weight: 500;
+        }
+        .dd-item:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+        .dd-sep {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 10px;
+        }
+
+        #lock-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 8000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 0px;
+            transition: opacity 0.8s ease, filter 0.8s ease;
+            animation: lockFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        #lock-screen.visible {
+            display: flex;
+        }
+        @keyframes lockFadeIn {
+            0% { opacity: 0; backdrop-filter: blur(0px); }
+            100% { opacity: 1; backdrop-filter: blur(16px); }
+        }
+        #lock-screen.unlocking {
+            opacity: 0;
+            filter: blur(24px);
+            pointer-events: none;
+            transition: opacity 0.8s ease, filter 0.8s ease;
+        }
+        .lock-time {
+            font-size: 92px;
+            font-weight: 300;
+            color: white;
+            letter-spacing: -3px;
+            text-shadow: 0 4px 40px rgba(0, 0, 0, 0.4);
+            line-height: 1;
+            margin-bottom: 4px;
+            position: relative;
+            animation: shimmer 4s ease-in-out infinite;
+            background: linear-gradient(135deg, #ffffff 40%, rgba(255, 255, 255, 0.4) 50%, #ffffff 60%);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .lock-date {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 3px;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            font-weight: 400;
+            margin-bottom: 28px;
+            animation: datePulse 3s ease-in-out infinite;
         }
-        .status-badge.blocked { background: #7f1d1d; color: #fca5a5; }
-        .status-badge.ok { background: #14532d; color: #86efac; }
-        .status-badge.error { background: #1e293b; color: #94a3b8; }
-        
-        .stat-badge {
-            display: inline-block;
-            padding: 0.2rem 0.7rem;
+        @keyframes datePulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.9; }
+        }
+        .lock-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 32px;
+            padding: 40px 44px 36px;
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0px;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+            animation: cardSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        @keyframes cardSlideUp {
+            0% { opacity: 0; transform: translateY(30px) scale(0.97); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .lock-user {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 20px;
+            letter-spacing: -0.3px;
+        }
+        .lock-input-wrap {
+            position: relative;
+            width: 100%;
+            margin-bottom: 6px;
+        }
+        .lock-input-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            stroke: var(--text3);
+            pointer-events: none;
+            transition: 0.3s;
+        }
+        .lock-input {
+            width: 100%;
+            padding: 16px 48px 16px 48px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 9999px;
-            font-size: 0.65rem;
-            font-weight: 700;
-            font-family: ui-monospace, monospace;
+            color: white;
+            font-size: 15px;
+            font-family: var(--font);
+            outline: none;
+            transition: all 0.4s ease;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+            position: relative;
         }
-        .stat-total { background: #27272a; color: #e4e4e7; }
-        .stat-ok { background: #14532d; color: #4ade80; }
-        .stat-blocked { background: #7f1d1d; color: #f87171; }
-        .stat-errors { background: #1e293b; color: #94a3b8; }
-        
-        .error-detail {
-            font-size: 0.55rem;
-            color: #f87171;
-            background: rgba(127, 29, 29, 0.3);
-            padding: 0.15rem 0.5rem;
-            border-radius: 0.25rem;
-            max-width: 180px;
+        .lock-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            font-weight: 400;
+            letter-spacing: 0px;
+        }
+        .lock-input:focus {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 0 30px rgba(59, 130, 246, 0.08);
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 0 30px rgba(59, 130, 246, 0.08); }
+            50% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.25), 0 0 50px rgba(59, 130, 246, 0.15); }
+        }
+        .lock-input:focus+.lock-input-icon {
+            stroke: var(--accent2);
+        }
+        .lock-input.err {
+            border-color: #ef4444;
+            animation: shake 0.4s;
+        }
+        .lock-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.15s;
+        }
+        .lock-toggle:hover {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .lock-toggle svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+        }
+        .lock-err {
+            font-size: 13px;
+            color: #fca5a5;
+            min-height: 24px;
+            text-align: center;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+        .lock-btn-wrap {
+            position: relative;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .lock-btn-ring {
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: var(--accent);
+            border-right-color: var(--accent2);
+            animation: spinRing 3s linear infinite;
+            opacity: 0.5;
+        }
+        @keyframes spinRing {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .lock-btn-ring:nth-child(2) {
+            inset: -12px;
+            border-top-color: var(--accent3);
+            border-right-color: transparent;
+            animation-duration: 4s;
+            animation-direction: reverse;
+            opacity: 0.3;
+        }
+        .lock-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+        .lock-btn:hover {
+            background: var(--accent2);
+            transform: scale(1.08);
+            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.5);
+        }
+        .lock-btn:active {
+            transform: scale(0.94);
+        }
+        .lock-btn svg {
+            width: 22px;
+            height: 22px;
+            stroke: white;
+            transition: transform 0.3s ease;
+        }
+        .lock-btn:hover svg {
+            transform: translateX(2px);
+        }
+        .lock-footer {
+            margin-top: 22px;
+            font-size: 13px;
+            color: var(--text3);
+            font-weight: 500;
+            animation: footerFade 1.2s ease forwards;
+            opacity: 0;
+            animation-delay: 0.6s;
+        }
+        @keyframes footerFade {
+            0% { opacity: 0; transform: translateY(8px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .lock-footer a {
+            color: var(--text3);
+            text-decoration: none;
+            transition: 0.15s;
+            cursor: pointer;
+        }
+        .lock-footer a:hover {
+            color: var(--text2);
+            text-decoration: underline;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        #desktop {
+            position: fixed;
+            top: 36px;
+            left: 0;
+            right: 0;
+            bottom: 72px;
+            z-index: 2;
+            overflow-y: auto;
+            padding: 24px 32px;
+        }
+        #icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 100px);
+            gap: 24px;
+            justify-content: start;
+            align-content: start;
+        }
+        .desk-icon {
+            width: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 12px 8px;
+            border-radius: 14px;
+            transition: all 0.2s;
+        }
+        .desk-icon:hover {
+            background: var(--surface);
+            transform: scale(1.02);
+        }
+        .di-box {
+            width: 64px;
+            height: 64px;
+            background: var(--surface);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .desk-icon:hover .di-box {
+            border-color: var(--accent);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+            transform: translateY(-4px);
+            background: var(--surface2);
+        }
+        .di-label {
+            font-size: 12px;
+            color: var(--text2);
+            text-align: center;
+            max-width: 80px;
+            word-break: break-word;
+            font-weight: 500;
+        }
+
+        #dock {
+            position: fixed;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 60px;
+            background: rgba(20, 20, 26, 0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 5000;
+            gap: 4px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+        }
+        #task-bar-apps {
+            display: flex;
+            gap: 2px;
+            align-items: center;
+        }
+        .taskbar-app {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text2);
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: var(--font);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: transparent;
+            border: 1px solid transparent;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        .taskbar-app:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+        .taskbar-app.active {
+            border-color: var(--border);
+            color: var(--text);
+            background: var(--surface2);
+        }
+        .taskbar-app .app-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
+        }
+        .dock-sep {
+            width: 1px;
+            height: 28px;
+            background: var(--border);
+            margin: 0 10px;
+            flex-shrink: 0;
+        }
+        .dock-right {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .dock-item {
+            width: 44px;
+            height: 44px;
+            background: transparent;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            color: var(--text2);
+        }
+        .dock-item:hover {
+            background: var(--surface2);
+            color: var(--text);
+            transform: translateY(-4px);
+        }
+        .dock-item svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+        }
+        .dock-item img {
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        .dock-tooltip {
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: white;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+            font-weight: 500;
+        }
+        .dock-item:hover .dock-tooltip { opacity: 1; }
+
+        .window {
+            position: absolute;
+            background: rgba(20, 20, 26, 0.85);
+            backdrop-filter: blur(32px);
+            -webkit-backdrop-filter: blur(32px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 100;
+            min-width: 360px;
+            min-height: 240px;
+        }
+        .window.active {
+            z-index: 200;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+        }
+        .window.opening {
+            animation: winOpen 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .window.minimizing {
+            animation: winMin 0.25s ease forwards;
+        }
+        @keyframes winOpen {
+            from { opacity: 0; transform: scale(0.96) translateY(12px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes winMin {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.92) translateY(16px); }
+        }
+        .win-titlebar {
+            height: 44px;
+            padding: 0 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: move;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .win-dots {
+            display: flex;
+            gap: 8px;
+        }
+        .win-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: filter 0.15s;
+            border: none;
+        }
+        .win-dot:hover { filter: brightness(1.2); }
+        .dot-r { background: #ef4444; }
+        .dot-y { background: #f59e0b; }
+        .dot-g { background: #22c55e; }
+        .win-title {
+            font-size: 13px;
+            color: var(--text2);
+            font-weight: 500;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .win-body {
+            flex: 1;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            padding: 20px;
+        }
+        .win-body::-webkit-scrollbar { width: 5px; }
+        .win-body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+        .link-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--text2);
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .link-row:hover {
+            background: var(--surface);
+            color: var(--text);
+            border-color: var(--border);
+            transform: translateX(4px);
+        }
+        .link-text {
+            flex: 1;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            font-size: 13px;
         }
-        
-        .sidebar-btn {
+
+        .settings-layout {
+            display: flex;
+            height: 100%;
             width: 100%;
+        }
+        .settings-nav {
+            width: 200px;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-right: 1px solid var(--border);
+            padding: 16px 0;
+            overflow-y: auto;
+        }
+        .sn-item {
+            padding: 10px 20px;
+            font-size: 14px;
+            color: var(--text2);
+            cursor: pointer;
+            transition: all 0.15s;
+            border-radius: 10px;
+            margin: 2px 12px;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.6rem 1rem;
-            border-radius: 0.75rem;
-            border: 1px solid transparent;
-            transition: all 0.2s;
-            background: transparent;
-            color: #a1a1aa;
-            cursor: pointer;
-            font-size: 0.8rem;
+            gap: 12px;
             font-weight: 500;
         }
-        .sidebar-btn:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: #e4e4e7;
+        .sn-item:hover { background: var(--surface); color: var(--text); }
+        .sn-item.active {
+            background: var(--surface2);
+            color: var(--accent2);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 10px 10px 0;
         }
-        .sidebar-btn.active {
-            background: rgba(255, 255, 255, 0.08);
-            color: white;
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-        .sidebar-btn.primary {
-            background: #ea580c;
-            color: white;
-        }
-        .sidebar-btn.primary:hover {
-            background: #f97316;
-        }
-        .sidebar-btn .icon {
-            font-size: 1.1rem;
-            width: 1.5rem;
-            text-align: center;
-        }
-        
-        .mode-selector {
-            display: flex;
-            background: rgba(255,255,255,0.05);
-            border-radius: 0.75rem;
-            padding: 0.2rem;
-            border: 1px solid rgba(255,255,255,0.06);
-        }
-        .mode-selector button {
+        .settings-content {
             flex: 1;
-            padding: 0.3rem 0.5rem;
-            border-radius: 0.6rem;
-            font-size: 0.7rem;
+            padding: 28px 32px;
+            overflow-y: auto;
+        }
+        .settings-title {
+            font-size: 24px;
             font-weight: 600;
-            background: transparent;
+            color: var(--text);
+            margin-bottom: 24px;
+            letter-spacing: -0.5px;
+        }
+        .settings-section { margin-bottom: 32px; }
+        .settings-section h4 {
+            font-size: 12px;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-radius: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            gap: 16px;
+        }
+        .setting-row:hover { background: var(--surface2); }
+        .setting-info { flex: 1; }
+        .setting-name {
+            font-size: 14px;
+            color: var(--text);
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .setting-desc {
+            font-size: 12px;
+            color: var(--text3);
+            font-weight: 400;
+        }
+        .toggle-switch {
+            width: 44px;
+            height: 26px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+            flex-shrink: 0;
             border: none;
-            color: #71717a;
+        }
+        .toggle-switch::after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .toggle-switch.on { background: var(--accent); }
+        .toggle-switch.on::after { left: 21px; background: white; }
+        .action-btn {
+            padding: 8px 18px;
+            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-weight: 500;
+        }
+        .action-btn:hover {
+            background: var(--surface2);
+            border-color: var(--accent);
+            color: var(--accent2);
+        }
+        .save-btn {
+            padding: 10px 28px;
+            border-radius: 12px;
+            background: var(--accent);
+            border: none;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .mode-selector button.active {
-            background: #3f3f46;
-            color: #e4e4e7;
+        .save-btn:hover {
+            background: var(--accent2);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
         }
-        .mode-selector button:hover:not(.active) {
-            color: #a1a1aa;
-        }
-        
-        .link-remove {
-            cursor: pointer;
-            color: #52525b;
-            font-size: 0.8rem;
-            line-height: 1;
-            padding: 0 0.2rem;
-            transition: color 0.2s;
-        }
-        .link-remove:hover { color: #ef4444; }
-        
-        .input-area {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 1rem;
-            padding: 0.5rem;
-            display: flex;
-            gap: 0.5rem;
-            transition: border-color 0.3s;
-        }
-        .input-area:focus-within {
-            border-color: rgba(234, 88, 12, 0.5);
-        }
-        .input-area input {
-            background: transparent;
-            border: none;
-            outline: none;
-            color: white;
-            padding: 0.6rem 0.8rem;
-            flex: 1;
-            font-size: 0.9rem;
-        }
-        .input-area input::placeholder {
-            color: #52525b;
-        }
-        .input-area button {
-            background: #ea580c;
-            color: white;
-            border: none;
-            padding: 0.5rem 1.2rem;
-            border-radius: 0.75rem;
+        .badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 11px;
             font-weight: 600;
-            font-size: 0.8rem;
+            background: var(--surface2);
+            color: var(--accent2);
+            border: 1px solid var(--border);
+        }
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 4px;
+        }
+        .theme-card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .theme-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border);
+            background: var(--surface2);
+        }
+        .theme-card.selected {
+            border-color: var(--accent);
+            background: var(--surface2);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+        .theme-preview-colors { display: flex; gap: 6px; align-items: center; }
+        .theme-color-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .theme-name {
+            font-size: 13px;
+            color: var(--text2);
+            font-weight: 500;
+        }
+        .custom-color-wrap {
             display: flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 14px;
+            margin-top: 12px;
+            flex-wrap: wrap;
         }
-        .input-area button:hover {
-            background: #f97316;
+        .custom-color-wrap label {
+            font-size: 14px;
+            color: var(--text2);
+            font-weight: 500;
         }
-        .input-area button:active {
-            transform: scale(0.96);
+        input[type="color"] {
+            width: 48px;
+            height: 38px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            padding: 2px;
+        }
+        .preview-box {
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            height: 80px;
+            position: relative;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+            background: var(--surface);
+        }
+        .preview-box-inner { position: absolute; inset: 0; opacity: 0.3; }
+        .preview-box-label {
+            position: relative;
+            font-size: 14px;
+            color: var(--text2);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        .input-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+        .input-group input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: var(--font);
+            outline: none;
+            transition: border-color 0.15s;
+            font-weight: 500;
+        }
+        .input-group input:focus { border-color: var(--accent); }
+        .mask-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .mask-btn {
+            padding: 6px 16px;
+            border-radius: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text2);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-weight: 500;
+        }
+        .mask-btn:hover {
+            background: var(--surface2);
+            border-color: var(--border);
+            color: var(--text);
+        }
+        .mask-btn.active {
+            background: var(--surface2);
+            border-color: var(--accent);
+            color: var(--accent2);
+        }
+
+        #modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 7000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-card {
+            background: rgba(20, 20, 26, 0.95);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            width: 380px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        .modal-card h3 {
+            font-size: 18px;
+            color: var(--text);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .modal-url {
+            font-size: 13px;
+            color: var(--text3);
+            margin-bottom: 20px;
+            word-break: break-all;
+            font-weight: 500;
+        }
+        .modal-btns { display: flex; flex-direction: column; gap: 8px; }
+        .modal-btn {
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-weight: 500;
+        }
+        .modal-btn:hover {
+            background: var(--surface2);
+            border-color: var(--accent);
+            color: var(--accent2);
+        }
+        .modal-btn.primary {
+            border-color: var(--accent);
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent2);
+        }
+        .modal-btn.cancel { color: var(--text3); }
+
+        #notif-stack {
+            position: fixed;
+            top: 48px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 9000;
+        }
+        .notif {
+            background: rgba(20, 20, 26, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            min-width: 280px;
+            max-width: 340px;
+            animation: notifIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: opacity 0.4s;
+            box-shadow: var(--shadow);
+        }
+        @keyframes notifIn {
+            from { opacity: 0; transform: translateX(20px) scale(0.95); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        .notif-icon { font-size: 18px; line-height: 1; }
+        .notif-title { font-size: 14px; font-weight: 600; color: var(--text); }
+        .notif-msg { font-size: 13px; color: var(--text2); margin-top: 2px; font-weight: 500; }
+
+        #ctx-menu {
+            position: fixed;
+            z-index: 8500;
+            background: rgba(20, 20, 26, 0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 6px;
+            min-width: 180px;
+            display: none;
+            box-shadow: var(--shadow);
+        }
+        .ctx-item {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text2);
+            cursor: pointer;
+            transition: 0.12s;
+            font-weight: 500;
+        }
+        .ctx-item:hover { background: var(--surface2); color: var(--text); }
+        .ctx-sep {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 10px;
+        }
+
+        .about-body {
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            text-align: center;
+        }
+        .about-logo {
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
+            object-fit: cover;
+            border: 2px solid var(--border);
+            background: var(--surface);
+        }
+        .about-name { font-size: 24px; font-weight: 600; color: var(--text); }
+        .about-ver { font-size: 13px; color: var(--text3); font-weight: 500; }
+        .about-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 16px;
+            background: var(--surface);
+            border-radius: 10px;
+            width: 100%;
+            font-size: 14px;
+            color: var(--text2);
+            font-weight: 500;
         }
     </style>
 </head>
-<body class="text-zinc-200 font-sans selection:bg-white selection:text-black">
+<body>
+    <div class="wallpaper-bg"></div>
+    <div id="grid-overlay"></div>
+    <div id="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    <div id="wallpaper"></div>
 
-    <div class="flex min-h-screen max-w-6xl mx-auto px-4 py-6 gap-6">
-        
-        <!-- SIDEBAR -->
-        <aside class="w-56 flex-shrink-0 hidden md:block">
-            <div class="glass rounded-2xl p-4 sticky top-6 space-y-4">
-                
-                <div class="flex items-center gap-3 pb-2 border-b border-zinc-800/50">
-                    <span class="text-2xl">⚡</span>
-                    <div>
-                        <h1 class="font-bold text-white text-lg leading-tight">Link Pro</h1>
-                        <p class="text-[10px] text-zinc-500 uppercase tracking-wider">Companion</p>
-                    </div>
+    <div id="loading-screen-overlay" class="active">
+        <div id="loading-screen">
+            <div id="loading-timer">5.00s</div>
+
+            <div class="ls-content">
+                <svg class="blockScreen-svg" height="66" viewBox="0 0 66 66" width="66" xmlns="http://www.w3.org/2000/svg">
+                    <title>access blocked</title>
+                    <g fill="none" fill-rule="evenodd" stroke="#ff6600" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                        <path d="M33 1C15.327 1 1 15.327 1 33c0 17.673 14.327 32 32 32 17.673 0 32-14.327 32-32"></path>
+                        <path d="M21.288 21.387v-4.344c0-3.624 2.936-6.562 6.564-6.562h17v10.93c1.35.26 2.37 1.446 2.37 2.883v.822c0 1.44-1.037 2.638-2.4 2.887-.437 6.106-5.53 10.924-11.752 10.924-6.213 0-11.302-4.816-11.75-10.9-1.435-.19-2.542-1.414-2.542-2.91v-.823c0-1.48 1.093-2.702 2.51-2.906zM27.435 38.926l-2.772 5.656h-6.598c-3.385 0-6.398 2.85-6.398 6.196v6.06m42.666-.134v-6.06c0-3.34-2.74-6.062-6.118-6.062h-7.413l-2.77-5.656M53.148 10.48H65v8.297H53.148zM55.52 3.37h7.11v7.11h-7.11z"></path>
+                    </g>
+                </svg>
+                <div class="loading-school-name" id="ls-school">Restricted Independent School District</div>
+                <div class="loading-stripe">
+                    <div class="top-text" id="ls-top">Oops,</div>
+                    <div class="website" id="ls-hostname">2kp6j7kpq2m9xlb.ub</div>
+                    <div class="bottom-text" id="ls-bottom">is not available because it is blocked for █████.</div>
                 </div>
-
-                <button id="syncBtn" class="sidebar-btn">
-                    <span class="icon">🔄</span> Sync Firebase
-                </button>
-
-                <button id="testProxyBtn" class="sidebar-btn">
-                    <span class="icon">🔌</span> Test Proxy
-                </button>
-
-                <div class="pt-2">
-                    <p class="text-[10px] uppercase text-zinc-500 tracking-wider mb-1.5">Mode</p>
-                    <div class="mode-selector">
-                        <button id="modeBlock" class="active">🛡️ Block</button>
-                        <button id="modePing">📡 Ping</button>
-                    </div>
-                </div>
-
-                <button id="checkAllBtn" class="sidebar-btn primary">
-                    <span class="icon">⚡</span> Check All Links
-                </button>
-
-                <div class="pt-2 border-t border-zinc-800/50 text-[10px] text-zinc-500 space-y-1">
-                    <div class="flex justify-between"><span>Checked</span><span id="totalBadgeMini" class="font-mono">0</span></div>
-                    <div class="flex justify-between"><span>OK</span><span id="okBadgeMini" class="font-mono text-green-400">0</span></div>
-                    <div class="flex justify-between"><span>Blocked</span><span id="blockedBadgeMini" class="font-mono text-red-400">0</span></div>
-                    <div class="flex justify-between"><span>Errors</span><span id="errorsBadgeMini" class="font-mono text-zinc-400">0</span></div>
-                </div>
-            </div>
-        </aside>
-
-        <!-- MAIN CONTENT -->
-        <main class="flex-1 min-w-0 space-y-5">
-            
-            <div class="flex items-center justify-between md:hidden">
-                <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-                    <span>⚡</span> Link Pro
-                </h1>
-                <div class="flex gap-2">
-                    <button id="syncBtnMobile" class="circle-btn sync" title="Sync Firebase">🔄</button>
-                    <button id="testProxyBtnMobile" class="circle-btn test" title="Test Proxy">🔌</button>
-                </div>
+                <div class="loading-system-msg" id="ls-system">You are logged in as student111@risd.edu (IP Address: 111.111.1111).</div>
             </div>
 
-            <div class="glass rounded-2xl p-5">
-                <h2 class="text-sm font-semibold text-zinc-300 mb-2">Add URLs</h2>
-                <div class="input-area">
-                    <input type="text" id="customUrlInput" placeholder="Paste one or multiple URLs (newline, comma, or space separated) ..." />
-                    <button id="scanBtn">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                        Scan
-                    </button>
-                </div>
-                <div class="flex gap-2 mt-2 flex-wrap">
-                    <span class="text-[10px] text-zinc-500">Try:</span>
-                    <button onclick="document.getElementById('customUrlInput').value='glseries.net'" class="border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 px-2.5 py-0.5 rounded-lg text-[11px] transition-colors">glseries.net</button>
-                    <button onclick="document.getElementById('customUrlInput').value='google.com'" class="border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 px-2.5 py-0.5 rounded-lg text-[11px] transition-colors">google.com</button>
-                    <button onclick="document.getElementById('customUrlInput').value='youtube.com'" class="border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 px-2.5 py-0.5 rounded-lg text-[11px] transition-colors">youtube.com</button>
-                </div>
-            </div>
-
-            <div class="glass rounded-2xl p-5">
-                <div class="flex justify-between items-center mb-2">
-                    <h2 class="text-sm font-semibold text-zinc-300">Loaded Links</h2>
-                    <span id="linkCount" class="text-[10px] text-zinc-500 font-mono">0</span>
-                </div>
-                <div id="linksDisplayZone" class="space-y-1 max-h-48 overflow-y-auto pr-1">
-                    <p class="text-xs italic text-zinc-600 text-center py-3">No links yet. Add some above.</p>
-                </div>
-            </div>
-
-            <div id="resultsWrapper" class="hidden space-y-4 transition-all duration-500 opacity-0 translate-y-2">
-                
-                <div class="glass rounded-2xl p-4 flex flex-wrap justify-between items-center gap-2">
-                    <span id="progressText" class="text-xs font-semibold text-zinc-400">Awaiting Execution</span>
-                    <div class="flex gap-1 text-[10px] font-mono font-bold flex-wrap">
-                        <span id="totalBadge" class="stat-badge stat-total">0 checked</span>
-                        <span id="successBadge" class="stat-badge stat-ok">0 OK</span>
-                        <span id="errorBadge" class="stat-badge stat-blocked">0 BLOCKED</span>
-                        <span id="errorCountBadge" class="stat-badge stat-errors hidden">0 errors</span>
-                    </div>
-                </div>
-
-                <div class="glass rounded-2xl p-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <div class="flex items-center gap-2 font-mono text-xs font-bold text-white">
-                            🌎 <span id="currentTargetDisplay" class="truncate max-w-[200px]">awaiting...</span>
+            <div class="gg-content">
+                <div class="gg-outer">
+                    <div class="gg-middle">
+                        <div class="gg-inner">
+                            <div class="gg-title" id="gg-title">Restricted</div>
+                            <div class="gg-message" id="gg-message">This website has been blocked by your administrator.</div>
                         </div>
-                        <button id="clearBtn" class="p-1.5 rounded-lg text-zinc-500 hover:text-white transition-colors bg-zinc-900 border border-zinc-800 text-xs">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <div class="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden shadow-inner">
-                            <div id="progressFillGreen" class="h-full bg-green-500 transition-all duration-300" style="width: 0%"></div>
-                        </div>
-                        <span id="progressPercent" class="text-yellow-500 font-bold text-xs tracking-wide">0%</span>
                     </div>
                 </div>
-
-                <div id="resultsList" class="space-y-1.5 pb-4"></div>
             </div>
 
-        </main>
+            <div class="sc-content">
+                <div class="blocked-page businessbg">
+                    <div class="padding-wrapper">
+                        <div class="newGrid_container shadow-container">
+                            <div class="row top-logo">
+                                <img src="https://cdn.jsdelivr.net/gh/UNBL0CKEDZ0NE/ubassets@latest/idk/securly.png" alt="Logo">
+                            </div>
+                            <h1 class="text-center heading" id="sc-heading">Looks like this page isn't allowed</h1>
+                            <div class="schlblockMessage mt-0 text-center" id="sc-message">This page has been blocked.</div>
+                            <div class="row content-row">
+                                <div class="col-md-7 text-center">
+                                    <div class="lhs-img-container">
+                                        <img src="https://www.securly.com/app/images/blocking-animation.gif" alt="Blocking animation">
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <section class="rhs-container">
+                                        <div id="blockDetails" class="block-details">
+                                            <h2 class="details-heading">Blocking details</h2>
+                                            <div class="regularBody">
+                                                <span>URL: </span>
+                                                <span id="sc-url">ixl.com</span>
+                                            </div>
+                                            <div class="regularBody">
+                                                <span>Reason: </span>
+                                                <span id="sc-reason">Education Material</span>
+                                            </div>
+                                            <div id="additional-details" style="margin-top:20px;border-top:1px solid #eee;padding-top:10px;">
+                                                <div class="details"><span>Policy: </span><span id="sc-policy">Base/Default Policy</span></div>
+                                                <div class="details"><span>Date and time: </span><span id="sc-date">Wednesday 04/22/26</span></div>
+                                                <div class="details"><span>External IP: </span><span id="sc-ip">your NOT getting my ip.</span></div>
+                                                <div class="details"><span>Filtering methods: </span><span>DNS</span></div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script>
-        // ============================================================
-        //  CONFIG
-        // ============================================================
-        const GL_API_BASE = 'http://localhost:3000';
-        const GL_TOKEN = 'gl_87181404ca1618e1a040c0457d059cc9e572231729bff9d8';
-        const FILTER = 'goguardian';
+    <div id="menubar">
+        <div class="mb-logo">
+            <img src="https://plain-enam-prod-public.komododecks.com/202605/26/LG7GKEoOUrqMZNNhTlLB/image.png" alt="logo" onerror="this.style.display='none'" />
+            <span class="mb-logo-text">Editor</span>
+        </div>
+        <div class="mb-item">File
+            <div class="mb-dropdown">
+                <div class="dd-item" onclick="notify('📁','New Window','Opening...')">New Window</div>
+                <div class="dd-sep"></div>
+                <div class="dd-item" onclick="openWindow('settings-win')">Settings</div>
+                <div class="dd-sep"></div>
+                <div class="dd-item" onclick="showAbout()">About</div>
+            </div>
+        </div>
+        <div class="mb-item">View
+            <div class="mb-dropdown">
+                <div class="dd-item" onclick="tileWindows()">Tile All Windows</div>
+                <div class="dd-sep"></div>
+                <div class="dd-item" onclick="closeAllWindows()">Close All Windows</div>
+            </div>
+        </div>
+        <div class="mb-item">Stealth
+            <div class="mb-dropdown">
+                <div class="dd-item" onclick="toggleStealth()">Toggle Stealth Mode</div>
+                <div class="dd-item" onclick="cloak('about:blank')">Cloak Tab</div>
+                <div class="dd-item" onclick="maskRandom()">Random Mask</div>
+                <div class="dd-sep"></div>
+                <div class="dd-item" onclick="togglePanic()">Toggle Panic Key</div>
+            </div>
+        </div>
+        <div class="mb-item">Help
+            <div class="mb-dropdown">
+                <div class="dd-item" onclick="showAbout()">About</div>
+            </div>
+        </div>
+        <div class="mb-right">
+            <i data-lucide="wifi" class="mb-icon"></i>
+            <i data-lucide="battery" class="mb-icon"></i>
+            <span id="mb-clock">--:--</span>
+        </div>
+    </div>
 
-        // ============================================================
-        //  FIREBASE INIT
-        // ============================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyDmJ5h-Ax9So9EvascO4cLAC0Uqd8Y8VHQ",
-            authDomain: "canvas-hub-e6135.firebaseapp.com",
-            databaseURL: "https://canvas-hub-e6135-default-rtdb.firebaseio.com",
-            projectId: "canvas-hub-e6135",
-            storageBucket: "canvas-hub-e6135.firebasestorage.app",
-            messagingSenderId: "761210776673",
-            appId: "1:761210776673:web:b06b4dd5d49cee154ace20",
-            measurementId: "G-XS5J5VG6S7"
-        };
-        try { if (!firebase.apps.length) firebase.initializeApp(firebaseConfig); } catch(e) { console.error('Firebase init error:', e); }
-        const database = firebase.database();
+    <div id="desktop">
+        <div id="icon-grid"></div>
+    </div>
 
-        // ============================================================
-        //  STATE
-        // ============================================================
-        let runtimeLinks = [];
-        let isChecking = false;
-        let currentMode = 'block';
+    <div id="lock-screen">
+        <div class="lock-time" id="lock-clock">--:--</div>
+        <div class="lock-date" id="lock-date">Loading...</div>
+        <div class="lock-card">
+            <div class="lock-user">User</div>
+            <div class="lock-input-wrap">
+                <i data-lucide="lock" class="lock-input-icon"></i>
+                <input class="lock-input" type="password" id="lock-pass" placeholder="Enter password" autocomplete="off" />
+                <button class="lock-toggle" onclick="toggleLockVis()">
+                    <i data-lucide="eye"></i>
+                </button>
+            </div>
+            <div class="lock-err" id="lock-err"></div>
+            <div class="lock-btn-wrap">
+                <div class="lock-btn-ring"></div>
+                <div class="lock-btn-ring"></div>
+                <button class="lock-btn" onclick="doUnlock()">
+                    <i data-lucide="arrow-right"></i>
+                </button>
+            </div>
+            <div class="lock-footer">
+                <a href="#" onclick="notify('🔑','Reset Password','Check your email for a reset link.')">Forgot password?</a>
+            </div>
+        </div>
+    </div>
 
-        // ============================================================
-        //  DOM REFS
-        // ============================================================
-        const customUrlInput = document.getElementById('customUrlInput');
-        const scanBtn = document.getElementById('scanBtn');
-        const resultsWrapper = document.getElementById('resultsWrapper');
-        const resultsList = document.getElementById('resultsList');
-        const linksDisplayZone = document.getElementById('linksDisplayZone');
-        const currentTargetDisplay = document.getElementById('currentTargetDisplay');
-        const progressFillGreen = document.getElementById('progressFillGreen');
-        const progressPercent = document.getElementById('progressPercent');
-        const progressText = document.getElementById('progressText');
-        const totalBadge = document.getElementById('totalBadge');
-        const successBadge = document.getElementById('successBadge');
-        const errorBadge = document.getElementById('errorBadge');
-        const errorCountBadge = document.getElementById('errorCountBadge');
-        const clearBtn = document.getElementById('clearBtn');
-        const syncBtn = document.getElementById('syncBtn');
-        const syncBtnMobile = document.getElementById('syncBtnMobile');
-        const testProxyBtn = document.getElementById('testProxyBtn');
-        const testProxyBtnMobile = document.getElementById('testProxyBtnMobile');
-        const checkAllBtn = document.getElementById('checkAllBtn');
-        const modeBlock = document.getElementById('modeBlock');
-        const modePing = document.getElementById('modePing');
-        const linkCount = document.getElementById('linkCount');
-        const totalBadgeMini = document.getElementById('totalBadgeMini');
-        const okBadgeMini = document.getElementById('okBadgeMini');
-        const blockedBadgeMini = document.getElementById('blockedBadgeMini');
-        const errorsBadgeMini = document.getElementById('errorsBadgeMini');
+    <div id="win-container"></div>
 
-        // ============================================================
-        //  SYNC BUTTONS (desktop + mobile)
-        // ============================================================
-        syncBtn.addEventListener('click', syncFirebase);
-        syncBtnMobile.addEventListener('click', syncFirebase);
-        testProxyBtn.addEventListener('click', testProxy);
-        testProxyBtnMobile.addEventListener('click', testProxy);
-
-        // ============================================================
-        //  MODE TOGGLE
-        // ============================================================
-        modeBlock.addEventListener('click', () => {
-            currentMode = 'block';
-            modeBlock.classList.add('active');
-            modePing.classList.remove('active');
-        });
-        modePing.addEventListener('click', () => {
-            currentMode = 'ping';
-            modePing.classList.add('active');
-            modeBlock.classList.remove('active');
-        });
-
-        // ============================================================
-        //  RENDER LINKS
-        // ============================================================
-        function renderLinksDisplay() {
-            linksDisplayZone.innerHTML = '';
-            linkCount.textContent = runtimeLinks.length;
-            if (runtimeLinks.length === 0) {
-                linksDisplayZone.innerHTML = `<p class="text-xs italic text-zinc-600 text-center py-3">No links yet. Add some above.</p>`;
-                return;
-            }
-            runtimeLinks.forEach((item, index) => {
-                const row = document.createElement('div');
-                row.className = 'flex items-center justify-between gap-3 p-1.5 bg-zinc-900/50 border border-zinc-800 rounded-lg text-xs';
-                
-                let removeHtml = '';
-                if (item.origin === 'Custom') {
-                    removeHtml = `<span class="link-remove" data-url="${item.url}">×</span>`;
-                }
-                
-                row.innerHTML = `
-                    <div class="flex items-center gap-2 truncate flex-1">
-                        <span class="text-zinc-500 font-bold select-none w-4 text-right text-[10px]">${index + 1}</span>
-                        <span class="truncate text-zinc-300 font-mono text-[11px]">${item.url}</span>
+    <div id="settings-win" class="window" style="width:840px;height:680px;top:80px;left:120px;">
+        <div class="win-titlebar">
+            <div class="win-dots">
+                <div class="win-dot dot-r" onclick="closeWindow('settings-win')"></div>
+                <div class="win-dot dot-y" onclick="minimizeWindow('settings-win')"></div>
+                <div class="win-dot dot-g" onclick="maximizeWindow('settings-win')"></div>
+            </div>
+            <div class="win-title">System Preferences</div>
+        </div>
+        <div class="win-body" style="display:flex;height:calc(100% - 44px);padding:0;">
+            <div class="settings-layout" style="width:100%;">
+                <div class="settings-nav">
+                    <div class="sn-item active" onclick="setSettingsTab(this,'appearance')">🎨 Appearance</div>
+                    <div class="sn-item" onclick="setSettingsTab(this,'stealth')">🛡️ Stealth</div>
+                    <div class="sn-item" onclick="setSettingsTab(this,'cloaking')">🎭 Cloaking</div>
+                    <div class="sn-item" onclick="setSettingsTab(this,'panic')">🚨 Panic</div>
+                    <div class="sn-item" onclick="setSettingsTab(this,'privacy')">🔒 Privacy</div>
+                </div>
+                <div class="settings-content">
+                    <div id="tab-appearance">
+                        <div class="settings-title">Appearance</div>
+                        <div class="settings-section">
+                            <h4>Theme</h4>
+                            <div class="theme-grid" id="color-grid"></div>
+                        </div>
+                        <div class="settings-section">
+                            <h4>Custom Color</h4>
+                            <div class="custom-color-wrap">
+                                <label>Pick a color:</label>
+                                <input type="color" id="custom-color-picker" value="#0b0b0e" />
+                                <span style="font-size:14px;color:var(--text3);font-weight:500;" id="custom-hex">#0b0b0e</span>
+                                <button class="action-btn" onclick="applyCustomColor()">Apply</button>
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <h4>Preview</h4>
+                            <div class="preview-box" id="preview-box">
+                                <div class="preview-box-inner" id="bg-preview-inner"></div>
+                                <div class="preview-box-label">Desktop Preview</div>
+                            </div>
+                        </div>
+                        <button class="save-btn" onclick="saveAppearance()">Save Changes</button>
+                        <div style="font-size:13px;color:var(--text3);margin-top:12px;" id="save-status"></div>
                     </div>
-                    <div class="flex items-center gap-1.5 flex-shrink-0">
-                        <span class="text-[9px] uppercase font-bold px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">${item.origin}</span>
-                        ${removeHtml}
-                    </div>
-                `;
-                linksDisplayZone.appendChild(row);
-                
-                if (item.origin === 'Custom') {
-                    const removeBtn = row.querySelector('.link-remove');
-                    removeBtn.addEventListener('click', () => {
-                        runtimeLinks = runtimeLinks.filter(link => link.url !== item.url);
-                        renderLinksDisplay();
-                    });
-                }
-            });
-        }
 
-        // ============================================================
-        //  SMART SPLIT
-        // ============================================================
-        function splitUrls(input) {
-            if (input.includes('\n')) {
-                return input.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-            }
-            if (input.includes(',')) {
-                return input.split(',').map(s => s.trim()).filter(s => s.length > 0);
-            }
-            if (input.includes(' ') && input.includes('://')) {
-                const parts = input.split(/\s+/).filter(s => s.length > 0);
-                if (parts.length > 1 && parts.every(p => p.includes('://') || p.includes('.'))) {
-                    return parts;
-                }
-            }
-            return [input];
-        }
-
-        // ============================================================
-        //  ADD AND SCAN
-        // ============================================================
-        function addAndScanUrls(input) {
-            const rawUrls = splitUrls(input);
-            const urlsToCheck = [];
-            let added = 0;
-            
-            rawUrls.forEach(raw => {
-                let cleanUrl = raw.trim();
-                if (!cleanUrl) return;
-                if (!/^https?:\/\//i.test(cleanUrl)) {
-                    cleanUrl = 'https://' + cleanUrl;
-                }
-                if (!runtimeLinks.some(item => item.url === cleanUrl)) {
-                    runtimeLinks.push({ url: cleanUrl, origin: 'Custom' });
-                    added++;
-                }
-                urlsToCheck.push(cleanUrl);
-            });
-            
-            renderLinksDisplay();
-            if (urlsToCheck.length > 0) {
-                customUrlInput.value = '';
-                runCheck(urlsToCheck);
-            } else {
-                alert('No valid URLs found.');
-            }
-        }
-
-        scanBtn.addEventListener('click', () => {
-            const input = customUrlInput.value.trim();
-            if (!input) { alert('Please enter a URL.'); return; }
-            addAndScanUrls(input);
-        });
-
-        customUrlInput.addEventListener('keypress', (e) => { 
-            if (e.key === 'Enter') scanBtn.click(); 
-        });
-
-        // ============================================================
-        //  EXTRACT LINKS (Firebase)
-        // ============================================================
-        function extractLinksFromObject(obj, extracted = []) {
-            if (!obj) return extracted;
-            if (typeof obj === 'string') {
-                let trimmed = obj.trim();
-                if (/^https?:\/\//i.test(trimmed) || (trimmed.includes('.') && !trimmed.includes(' '))) {
-                    extracted.push(trimmed);
-                }
-            } else if (Array.isArray(obj)) {
-                obj.forEach(item => extractLinksFromObject(item, extracted));
-            } else if (typeof obj === 'object') {
-                Object.values(obj).forEach(val => extractLinksFromObject(val, extracted));
-            }
-            return extracted;
-        }
-
-        // ============================================================
-        //  UPDATE STATS (main + mini)
-        // ============================================================
-        function updateStats(total, ok, blocked, errors) {
-            totalBadge.textContent = `${total} checked`;
-            successBadge.textContent = `${ok} OK`;
-            errorBadge.textContent = `${blocked} BLOCKED`;
-            if (errors > 0) {
-                errorCountBadge.classList.remove('hidden');
-                errorCountBadge.textContent = `${errors} errors`;
-            } else {
-                errorCountBadge.classList.add('hidden');
-            }
-            // Mini
-            totalBadgeMini.textContent = total;
-            okBadgeMini.textContent = ok;
-            blockedBadgeMini.textContent = blocked;
-            errorsBadgeMini.textContent = errors;
-        }
-
-        // ============================================================
-        //  PING
-        // ============================================================
-        async function pingUrl(url) {
-            const startTime = performance.now();
-            let status = 'unknown', latency = 0, errorMsg = '';
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
-                const response = await fetch(url, { method: 'HEAD', mode: 'cors', signal: controller.signal })
-                    .catch(() => fetch(url, { method: 'GET', mode: 'cors', signal: controller.signal }));
-                clearTimeout(timeoutId);
-                latency = Math.round(performance.now() - startTime);
-                if (response && response.ok) status = 'active';
-                else if (response) { status = 'error'; errorMsg = `HTTP ${response.status}`; }
-                else { status = 'error'; errorMsg = 'No response'; }
-            } catch (err) {
-                latency = Math.round(performance.now() - startTime);
-                if (err.name === 'AbortError') { status = 'timeout'; errorMsg = 'Timeout (5s)'; }
-                else if (err.name === 'TypeError') { status = 'cors'; errorMsg = 'CORS blocked'; }
-                else { status = 'error'; errorMsg = err.message || 'Unknown error'; }
-            }
-            return { status, latency, errorMsg };
-        }
-
-        // ============================================================
-        //  RUN CHECK
-        // ============================================================
-        async function runCheck(urlsToCheck) {
-            if (isChecking) return;
-            isChecking = true;
-
-            resultsWrapper.classList.remove('hidden');
-            setTimeout(() => {
-                resultsWrapper.classList.remove('opacity-0', 'translate-y-2');
-            }, 50);
-            
-            resultsList.innerHTML = '';
-            progressFillGreen.style.width = '0%';
-            progressPercent.textContent = '0%';
-            progressText.textContent = 'Starting...';
-            
-            let completed = 0, total = urlsToCheck.length;
-            let okCount = 0, blockedCount = 0, errorCount = 0;
-            
-            currentTargetDisplay.textContent = `1/${total}: ${urlsToCheck[0]}`;
-            updateStats(0, 0, 0, 0);
-
-            const modeLabel = currentMode === 'block' ? 'GoGuardian' : 'Ping';
-
-            for (const url of urlsToCheck) {
-                const row = document.createElement('div');
-                row.className = 'result-row flex justify-between items-center p-3 rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm transition-all';
-                row.innerHTML = `
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <span class="text-base bg-zinc-800 p-1.5 rounded-lg flex-shrink-0">${currentMode === 'block' ? '🛡️' : '📡'}</span>
-                        <div class="min-w-0 flex-1">
-                            <div class="font-bold text-xs text-zinc-100 truncate">${url}</div>
-                            <div class="text-[10px] text-zinc-500">${modeLabel}</div>
+                    <div id="tab-stealth" style="display:none;">
+                        <div class="settings-title">Stealth Mode</div>
+                        <div class="settings-section">
+                            <h4>Obfuscation</h4>
+                            <div class="setting-row">
+                                <div class="setting-info">
+                                    <div class="setting-name">Stealth Mode</div>
+                                    <div class="setting-desc">Replaces characters with Cyrillic lookalikes to bypass text filters.</div>
+                                </div>
+                                <div class="toggle-switch on" id="stealth-toggle" onclick="toggleStealth()"></div>
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <h4>Live Preview</h4>
+                            <div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;color:var(--text3);">
+                                    <span>Original</span>
+                                    <span>Obfuscated</span>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                                    <div style="background:var(--surface2);padding:12px;border-radius:10px;font-size:14px;color:var(--text2);">The quick brown fox jumps over the lazy dog.</div>
+                                    <div style="background:var(--surface2);padding:12px;border-radius:10px;font-size:14px;" id="stealth-preview">Тhе ԛuісk brоwn fох јumрs оvеr thе lаzу dоg.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <h4>Status</h4>
+                            <div class="setting-row">
+                                <div class="setting-info"><div class="setting-name">Level</div><div class="setting-desc" id="stealth-level-text">Level 3: Maximum obfuscation</div></div>
+                                <span class="badge" id="stealth-status-badge">ACTIVE</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                        <span class="status-badge bg-zinc-800 text-zinc-400 text-[9px]">Checking...</span>
-                        <span class="time-cell text-[10px] text-zinc-600 font-mono">--ms</span>
+
+                    <div id="tab-cloaking" style="display:none;">
+                        <div class="settings-title">Tab Cloaking</div>
+                        <div class="settings-section">
+                            <h4>Cloak Tab</h4>
+                            <p style="font-size:13px;color:var(--text3);margin-bottom:12px;">Open a new tab with the current page loaded in a stealthy way.</p>
+                            <div class="input-group">
+                                <input type="text" id="cloak-url" placeholder="Enter URL to cloak (e.g., https://example.com)" />
+                                <button class="action-btn" onclick="cloakCustom()">Cloak</button>
+                            </div>
+                            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                                <button class="action-btn" onclick="cloak('about:blank')">about:blank</button>
+                                <button class="action-btn" onclick="cloak('blob')">Blob URL</button>
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <h4>Tab Masks</h4>
+                            <p style="font-size:13px;color:var(--text3);margin-bottom:8px;">Change the current tab's title and icon to disguise it as a popular educational app.</p>
+                            <button class="action-btn" onclick="maskRandom()" style="margin-bottom:10px;">🎲 Random Mask</button>
+                            <div class="mask-grid" id="mask-grid"></div>
+                        </div>
                     </div>
-                `;
-                resultsList.appendChild(row);
 
-                const badge = row.querySelector('.status-badge');
-                const timeCell = row.querySelector('.time-cell');
-                
-                let isBlocked = false, category = '—', hasError = false, errorMessage = '';
+                    <div id="tab-panic" style="display:none;">
+                        <div class="settings-title">Panic Mode</div>
+                        <div class="settings-section">
+                            <h4>Panic Key</h4>
+                            <div class="setting-row">
+                                <div class="setting-info">
+                                    <div class="setting-name">Enable Panic Key</div>
+                                    <div class="setting-desc">Press the backtick key (`) to instantly hide everything.</div>
+                                </div>
+                                <div class="toggle-switch" id="panic-toggle" onclick="togglePanic()"></div>
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <h4>Redirect URL</h4>
+                            <div class="input-group">
+                                <input type="text" id="panic-url" placeholder="https://www.google.com" value="https://www.google.com" />
+                                <button class="action-btn" onclick="savePanicUrl()">Save</button>
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <h4>Test</h4>
+                            <button class="action-btn" onclick="triggerPanic()" style="padding:10px 24px;">🚨 Test Panic Button</button>
+                            <p style="font-size:12px;color:var(--text3);margin-top:8px;">This simulates the panic key. The page will hide and redirect.</p>
+                        </div>
+                    </div>
 
-                if (currentMode === 'block') {
-                    const startTime = performance.now();
-                    try {
-                        const endpoint = `${GL_API_BASE}/check?token=${GL_TOKEN}&url=${encodeURIComponent(url)}&filter=${FILTER}`;
-                        const resp = await fetch(endpoint);
-                        const latency = Math.round(performance.now() - startTime);
-                        timeCell.textContent = `${latency}ms`;
+                    <div id="tab-privacy" style="display:none;">
+                        <div class="settings-title">Privacy</div>
+                        <div class="settings-section">
+                            <h4>Screen Privacy</h4>
+                            <div class="setting-row">
+                                <div class="setting-info">
+                                    <div class="setting-name">Privacy overlay on blur</div>
+                                    <div class="setting-desc">Cover the page with a custom loading screen when the tab is not focused.</div>
+                                </div>
+                                <div class="toggle-switch on" id="privacy-toggle" onclick="togglePrivacy()"></div>
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <h4>Redirect on blur</h4>
+                            <div class="setting-row">
+                                <div class="setting-info">
+                                    <div class="setting-name">Enable redirect on blur</div>
+                                    <div class="setting-desc">Leave the current page entirely when the tab loses focus.</div>
+                                </div>
+                                <div class="toggle-switch" id="redirect-toggle" onclick="toggleRedirect()"></div>
+                            </div>
+                            <div class="input-group" style="margin-top:8px;">
+                                <input type="text" id="redirect-url" placeholder="https://www.ixl.com" value="https://www.ixl.com" />
+                                <button class="action-btn" onclick="saveRedirectUrl()">Save</button>
+                            </div>
+                            <div style="margin-top:8px;">
+                                <button class="action-btn" onclick="testRedirect()">🔍 Test redirect (safe)</button>
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <h4>Loading Screen</h4>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:13px;color:var(--text2);font-weight:500;display:block;margin-bottom:4px;">Theme</label>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                    <button class="action-btn" onclick="setLoadingTheme('lightspeed')" id="theme-lightspeed">Lightspeed</button>
+                                    <button class="action-btn" onclick="setLoadingTheme('goguardian')" id="theme-goguardian">GoGuardian</button>
+                                    <button class="action-btn" onclick="setLoadingTheme('securly')" id="theme-securly">Securly</button>
+                                </div>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                                <div class="input-group" style="flex-direction:column;align-items:stretch;">
+                                    <label style="font-size:12px;color:var(--text3);">Title</label>
+                                    <input type="text" id="loading-title-input" placeholder="e.g. Restricted" />
+                                </div>
+                                <div class="input-group" style="flex-direction:column;align-items:stretch;">
+                                    <label style="font-size:12px;color:var(--text3);">Message</label>
+                                    <input type="text" id="loading-msg-input" placeholder="e.g. This page is blocked" />
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                <button class="action-btn" onclick="applyLoadingText()">Apply Text</button>
+                                <button class="action-btn" onclick="resetLoadingText()">Reset Defaults</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                        if (resp.ok) {
-                            const data = await resp.json();
-                            let filterData = null;
-                            if (data.results && data.results[FILTER]) filterData = data.results[FILTER];
-                            else if (data[FILTER]) filterData = data[FILTER];
-                            else if (data.blocked !== undefined) filterData = data;
-                            
-                            if (filterData && filterData.blocked !== undefined) {
-                                isBlocked = filterData.blocked === true;
-                                category = filterData.category || '—';
-                            } else {
-                                hasError = true;
-                                errorMessage = data.error || 'No filter data';
-                            }
-                        } else {
-                            hasError = true;
-                            errorMessage = `HTTP ${resp.status}`;
-                            try {
-                                const errData = await resp.json();
-                                if (errData.error) errorMessage = errData.error;
-                            } catch(e) {}
-                        }
-                    } catch (e) {
-                        const latency = Math.round(performance.now() - startTime);
-                        timeCell.textContent = `${latency}ms (error)`;
-                        hasError = true;
-                        errorMessage = e.message || 'Network error';
-                        if (errorMessage.includes('ERR_CONNECTION_REFUSED')) {
-                            errorMessage = 'Proxy not running (node proxy.js)';
-                        }
-                    }
+    <div id="about-win" class="window" style="width:360px;height:auto;top:120px;left:400px;">
+        <div class="win-titlebar">
+            <div class="win-dots">
+                <div class="win-dot dot-r" onclick="closeWindow('about-win')"></div>
+                <div class="win-dot dot-y" onclick="minimizeWindow('about-win')"></div>
+                <div class="win-dot dot-g"></div>
+            </div>
+            <div class="win-title">About</div>
+        </div>
+        <div class="win-body">
+            <div class="about-body">
+                <img class="about-logo" src="https://plain-enam-prod-public.komododecks.com/202605/26/LG7GKEoOUrqMZNNhTlLB/image.png" alt="logo" onerror="this.style.display='none'" />
+                <div class="about-name">Web Desktop</div>
+                <div class="about-ver">Version 2.1</div>
+                <div style="width:100%;display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+                    <div class="about-row"><span>Platform</span><span>Web</span></div>
+                    <div class="about-row"><span>Mode</span><span>Stealth L3</span></div>
+                    <div class="about-row"><span>Build</span><span>2025.05</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                    if (hasError) {
-                        badge.className = 'status-badge error';
-                        badge.textContent = '⚠️ ERROR';
-                        errorCount++;
-                        const errSpan = document.createElement('span');
-                        errSpan.className = 'error-detail';
-                        errSpan.textContent = errorMessage.substring(0, 50);
-                        errSpan.title = errorMessage;
-                        const rightSection = row.querySelector('.flex.items-center.gap-2.flex-shrink-0');
-                        rightSection?.appendChild(errSpan);
-                    } else if (isBlocked) {
-                        row.classList.add('bg-dangerBg', 'border-dangerBorder');
-                        row.classList.remove('bg-zinc-900/50', 'border-zinc-800');
-                        badge.className = 'status-badge blocked';
-                        badge.textContent = '🔴 BLOCKED';
-                        blockedCount++;
-                        if (category && category !== '—') {
-                            const rightSection = row.querySelector('.flex.items-center.gap-2.flex-shrink-0');
-                            const catTag = document.createElement('span');
-                            catTag.className = 'text-[9px] text-zinc-400 px-1.5 py-0.5 bg-zinc-800/50 rounded';
-                            catTag.textContent = category;
-                            rightSection?.insertBefore(catTag, rightSection.firstChild);
-                        }
-                    } else {
-                        row.classList.add('bg-successBg', 'border-successBorder');
-                        row.classList.remove('bg-zinc-900/50', 'border-zinc-800');
-                        badge.className = 'status-badge ok';
-                        badge.textContent = '🟢 OK';
-                        okCount++;
-                        if (category && category !== '—') {
-                            const rightSection = row.querySelector('.flex.items-center.gap-2.flex-shrink-0');
-                            const catTag = document.createElement('span');
-                            catTag.className = 'text-[9px] text-zinc-400 px-1.5 py-0.5 bg-zinc-800/50 rounded';
-                            catTag.textContent = category;
-                            rightSection?.insertBefore(catTag, rightSection.firstChild);
-                        }
-                    }
-                } else {
-                    const result = await pingUrl(url);
-                    const pingLatency = result.latency;
-                    timeCell.textContent = `${pingLatency}ms`;
-                    
-                    if (result.status === 'active') {
-                        row.classList.add('bg-successBg', 'border-successBorder');
-                        row.classList.remove('bg-zinc-900/50', 'border-zinc-800');
-                        badge.className = 'status-badge ok';
-                        badge.textContent = '🟢 ONLINE';
-                        okCount++;
-                    } else if (result.status === 'timeout') {
-                        row.classList.add('bg-dangerBg', 'border-dangerBorder');
-                        row.classList.remove('bg-zinc-900/50', 'border-zinc-800');
-                        badge.className = 'status-badge error';
-                        badge.textContent = '⏱️ TIMEOUT';
-                        errorCount++;
-                    } else if (result.status === 'cors') {
-                        row.classList.add('bg-dangerBg', 'border-dangerBorder');
-                        row.classList.remove('bg-zinc-900/50', 'border-zinc-800');
-                        badge.className = 'status-badge error';
-                        badge.textContent = '🛡️ CORS';
-                        errorCount++;
-                    } else {
-                        row.classList.add('bg-dangerBg', 'border-dangerBorder');
-                        row.classList.remove('bg-zinc-900/50', 'border-zinc-800');
-                        badge.className = 'status-badge error';
-                        badge.textContent = '🔴 OFFLINE';
-                        errorCount++;
-                    }
+    <div id="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <h3>Open Link</h3>
+            <div class="modal-url" id="modal-url">--</div>
+            <div class="modal-btns">
+                <button class="modal-btn primary" onclick="doOpen('stealth')">Stealth (clean iframe)</button>
+                <button class="modal-btn" onclick="doOpen('direct')">Open Direct</button>
+                <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notif-stack"></div>
+
+    <div id="ctx-menu">
+        <div class="ctx-item" onclick="hideCtx()">New Folder</div>
+        <div class="ctx-item" onclick="hideCtx()">Sort Icons</div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-item" onclick="openWindow('settings-win');hideCtx()">System Preferences</div>
+        <div class="ctx-item" onclick="showAbout();hideCtx()">About</div>
+    </div>
+
+    <div id="dock">
+        <div id="task-bar-apps"></div>
+        <div class="dock-sep"></div>
+        <div class="dock-right">
+            <div class="dock-item" onclick="openWindow('settings-win')">
+                <i data-lucide="settings"></i>
+                <div class="dock-tooltip">Settings</div>
+            </div>
+            <div class="dock-item" onclick="showAbout()">
+                <img src="https://plain-enam-prod-public.komododecks.com/202605/26/LG7GKEoOUrqMZNNhTlLB/image.png" alt="about" onerror="this.textContent='ℹ️'" />
+                <div class="dock-tooltip">About</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js">
+    </script>
+    <script>
+        let sections = [],
+            stealthEnabled = true,
+            panicEnabled = false;
+        let pendingUrl = null,
+            activeWindow = null;
+        let openWindows = new Set(),
+            zTop = 200;
+        let failedAttempts = 0,
+            isLocked = false,
+            lockUntil = null,
+            lockoutLevel = 0;
+        let db = null;
+
+        let privacyEnabled = true;
+        let redirectEnabled = false;
+        let redirectUrl = localStorage.getItem("redirect_url") || "https://www.ixl.com";
+
+        let loadingTheme = localStorage.getItem("loading_theme") || "lightspeed";
+        let loadingTitle = localStorage.getItem("loading_title") || "Restricted";
+        let loadingMessage = localStorage.getItem("loading_message") || "This website has been blocked by your administrator.";
+
+        (function() {
+            try {
+                const cfg = {
+                    apiKey: "AIzaSyDmJ5h-Ax9So9EvascO4cLAC0Uqd8Y8VHQ",
+                    authDomain: "canvas-hub-e6135.firebaseapp.com",
+                    databaseURL: "https://canvas-hub-e6135-default-rtdb.firebaseio.com",
+                    projectId: "canvas-hub-e6135",
+                    storageBucket: "canvas-hub-e6135.firebasestorage.app",
+                    messagingSenderId: "761210776673",
+                    appId: "1:761210776673:web:b06b4dd5d49cee154ace20"
+                };
+                if (typeof firebase !== "undefined") {
+                    firebase.initializeApp(cfg);
+                    db = firebase.database();
                 }
+            } catch (e) {}
+        })();
 
-                completed++;
-                const percent = Math.round((completed / total) * 100);
-                progressFillGreen.style.width = `${percent}%`;
-                progressPercent.textContent = `${percent}%`;
-                progressText.textContent = `Checking ${completed}/${total}...`;
-                currentTargetDisplay.textContent = `${completed}/${total}: ${url}`;
-                updateStats(completed, okCount, blockedCount, errorCount);
-            }
+        const MASKS = [
+            { name: "Canvas", title: "Canvas LMS", favicon: "https://www.google.com/s2/favicons?domain=canvaslms.net" },
+            { name: "Clever", title: "Clever", favicon: "https://www.google.com/s2/favicons?domain=clever.com" },
+            { name: "Google Classroom", title: "Google Classroom", favicon: "https://www.google.com/s2/favicons?domain=classroom.google.com" },
+            { name: "Blackboard", title: "Blackboard Learn", favicon: "https://www.google.com/s2/favicons?domain=blackboard.com" },
+            { name: "Schoology", title: "Schoology", favicon: "https://www.google.com/s2/favicons?domain=schoology.com" },
+            { name: "Khan Academy", title: "Khan Academy", favicon: "https://www.google.com/s2/favicons?domain=khanacademy.org" },
+            { name: "Quizlet", title: "Quizlet", favicon: "https://www.google.com/s2/favicons?domain=quizlet.com" },
+            { name: "Edpuzzle", title: "Edpuzzle", favicon: "https://www.google.com/s2/favicons?domain=edpuzzle.com" },
+            { name: "Nearpod", title: "Nearpod", favicon: "https://www.google.com/s2/favicons?domain=nearpod.com" },
+            { name: "Desmos", title: "Desmos", favicon: "https://www.google.com/s2/favicons?domain=desmos.com" },
+            { name: "Flipgrid", title: "Flipgrid", favicon: "https://www.google.com/s2/favicons?domain=flipgrid.com" },
+            { name: "Padlet", title: "Padlet", favicon: "https://www.google.com/s2/favicons?domain=padlet.com" },
+            { name: "Seesaw", title: "Seesaw", favicon: "https://www.google.com/s2/favicons?domain=seesaw.me" },
+            { name: "ClassDojo", title: "ClassDojo", favicon: "https://www.google.com/s2/favicons?domain=classdojo.com" },
+            { name: "Remind", title: "Remind", favicon: "https://www.google.com/s2/favicons?domain=remind.com" },
+            { name: "Zoom", title: "Zoom", favicon: "https://www.google.com/s2/favicons?domain=zoom.us" },
+            { name: "Google Meet", title: "Google Meet", favicon: "https://www.google.com/s2/favicons?domain=meet.google.com" },
+            { name: "Microsoft Teams", title: "Microsoft Teams", favicon: "https://www.google.com/s2/favicons?domain=teams.microsoft.com" },
+            { name: "Outlook", title: "Outlook", favicon: "https://www.google.com/s2/favicons?domain=outlook.office.com" },
+            { name: "Gmail", title: "Gmail", favicon: "https://www.google.com/s2/favicons?domain=mail.google.com" },
+            { name: "Google Drive", title: "Google Drive", favicon: "https://www.google.com/s2/favicons?domain=drive.google.com" }
+        ];
 
-            progressFillGreen.style.width = '100%';
-            progressPercent.textContent = '100%';
-            progressText.textContent = `✅ Complete!`;
-            currentTargetDisplay.textContent = `✅ Done! ${okCount} OK, ${blockedCount} BLOCKED${errorCount ? `, ${errorCount} errors` : ''}`;
-            updateStats(total, okCount, blockedCount, errorCount);
-            isChecking = false;
+        function applyMask(mask) {
+            if (!mask) return;
+            document.title = mask.title;
+            let fav = document.querySelector("#favicon") || document.createElement("link");
+            fav.id = "favicon";
+            fav.rel = "icon";
+            fav.href = mask.favicon;
+            fav.onerror = function() { this.href =
+                    "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>"; };
+            document.head.appendChild(fav);
+            document.querySelectorAll('.mask-btn').forEach(b => b.classList.toggle('active', b.dataset.mask === mask.name));
+            localStorage.setItem("su_mask", JSON.stringify(mask));
+            notify("🎭", "Masked", "Tab appears as " + mask.name);
         }
 
-        // ============================================================
-        //  CHECK ALL
-        // ============================================================
-        checkAllBtn.addEventListener('click', async () => {
-            if (runtimeLinks.length === 0) {
-                alert('No links to check! Add URLs first.');
-                return;
-            }
-            if (isChecking) return;
-            const urls = runtimeLinks.map(item => item.url);
-            await runCheck(urls);
-        });
+        function maskRandom() {
+            const random = MASKS[Math.floor(Math.random() * MASKS.length)];
+            applyMask(random);
+        }
 
-        // ============================================================
-        //  CLEAR
-        // ============================================================
-        clearBtn.addEventListener('click', () => {
-            resultsWrapper.classList.add('opacity-0', 'translate-y-2');
-            setTimeout(() => {
-                resultsWrapper.classList.add('hidden');
-                resultsList.innerHTML = '';
-                progressFillGreen.style.width = '0%';
-                progressPercent.textContent = '0%';
-                progressText.textContent = 'Awaiting Execution';
-                updateStats(0, 0, 0, 0);
-            }, 300);
-            customUrlInput.value = '';
-            currentTargetDisplay.textContent = 'awaiting...';
-        });
-
-        // ============================================================
-        //  FIREBASE SYNC – FIXED PERMISSION ERROR
-        // ============================================================
-        async function syncFirebase() {
-            syncBtn.innerHTML = '⏳';
-            syncBtn.disabled = true;
-            syncBtnMobile.innerHTML = '⏳';
-            syncBtnMobile.disabled = true;
-            
+        function loadStoredMask() {
             try {
-                // 🔥 READ FROM ALLOWED PATH – adjust '/sections' if your data is elsewhere
-                const snapshot = await database.ref('/sections').once('value');
-                const data = snapshot.val();
-                
-                if (data) {
-                    // Extract URLs from the data object
-                    const urls = extractLinksFromObject(data);
-                    let added = 0;
-                    urls.forEach(u => {
-                        if (!runtimeLinks.some(item => item.url === u)) {
-                            runtimeLinks.push({ url: u, origin: 'Firebase' });
-                            added++;
-                        }
-                    });
-                    renderLinksDisplay();
-                    alert(added > 0 ? `✅ Synced ${added} new URLs from Firebase!` : 'No new URLs found.');
+                const stored = localStorage.getItem("su_mask");
+                if (stored) {
+                    const mask = JSON.parse(stored);
+                    if (MASKS.some(m => m.name === mask.name)) {
+                        applyMask(mask);
+                        return;
+                    }
+                }
+            } catch (e) {}
+            maskRandom();
+        }
+
+        function buildMaskGrid() {
+            const container = document.getElementById("mask-grid");
+            if (!container) return;
+            container.innerHTML = "";
+            MASKS.forEach(m => {
+                const btn = document.createElement("button");
+                btn.className = "mask-btn";
+                btn.dataset.mask = m.name;
+                btn.textContent = m.name;
+                btn.onclick = () => applyMask(m);
+                container.appendChild(btn);
+            });
+        }
+
+        const THEMES = [
+            { name: "Forest Green", bg: "#0d1a11", wA: "rgba(20,60,30,0.55)", wB: "rgba(50,120,40,0.3)", ac: "#2ec85a",
+                ac2: "#68e88a", brd: "rgba(50,200,80,0.22)", p: "#121a14", p2: "#192110", p3: "#202a18",
+                t: "#e0f4e8", t2: "#90b89a", t3: "#5a7a60" },
+            { name: "Ocean Blue", bg: "#0a1220", wA: "rgba(20,50,120,0.55)", wB: "rgba(40,80,180,0.3)", ac: "#3a8aff",
+                ac2: "#70b0ff", brd: "rgba(60,140,255,0.22)", p: "#101828", p2: "#141e2e", p3: "#1a2638",
+                t: "#ddeeff", t2: "#8aaabb", t3: "#506070" },
+            { name: "Crimson", bg: "#1a0a0d", wA: "rgba(120,20,40,0.55)", wB: "rgba(180,40,60,0.3)", ac: "#e83a5a",
+                ac2: "#ff7090", brd: "rgba(220,60,90,0.22)", p: "#1e1012", p2: "#261416", p3: "#2e1a1c",
+                t: "#ffe0e5", t2: "#bb9098", t3: "#7a5060" },
+            { name: "Purple Haze", bg: "#0e0d1a", wA: "rgba(60,20,130,0.55)", wB: "rgba(100,40,180,0.3)", ac: "#8250ff",
+                ac2: "#b48aff", brd: "rgba(130,80,255,0.22)", p: "#13131a", p2: "#1a1a24", p3: "#20202e",
+                t: "#e8e0f8", t2: "#a090c0", t3: "#6a5a8a" },
+            { name: "Amber Gold", bg: "#1a1400", wA: "rgba(120,80,10,0.55)", wB: "rgba(180,130,20,0.3)", ac: "#f0a030",
+                ac2: "#ffd060", brd: "rgba(220,160,40,0.22)", p: "#1e1800", p2: "#261e00", p3: "#2e2400",
+                t: "#fff0cc", t2: "#c0a860", t3: "#806040" },
+            { name: "Cyber Teal", bg: "#071818", wA: "rgba(10,80,80,0.55)", wB: "rgba(20,140,130,0.3)", ac: "#1ecdc0",
+                ac2: "#60eeea", brd: "rgba(30,200,190,0.22)", p: "#0a1e1e", p2: "#0d2828", p3: "#103030",
+                t: "#d0f8f5", t2: "#80b8b5", t3: "#407070" },
+            { name: "Slate Night", bg: "#0f1015", wA: "rgba(30,35,60,0.55)", wB: "rgba(50,55,90,0.3)", ac: "#6a7aff",
+                ac2: "#9aa8ff", brd: "rgba(100,120,255,0.22)", p: "#131420", p2: "#18192a", p3: "#1e2034",
+                t: "#dde0ff", t2: "#8890b0", t3: "#505870" },
+            { name: "Rose Quartz", bg: "#1a0f14", wA: "rgba(120,40,80,0.5)", wB: "rgba(180,80,120,0.28)", ac: "#e86aa0",
+                ac2: "#ffa0c8", brd: "rgba(220,100,150,0.22)", p: "#1e1018", p2: "#261420", p3: "#2e1828",
+                t: "#ffe0ee", t2: "#c09098", t3: "#7a5060" }
+        ];
+        let curTheme = THEMES[0],
+            selSwatch = 0;
+
+        function applyTheme(t, save) {
+            curTheme = t;
+            const r = document.documentElement.style;
+            r.setProperty("--bg-color", t.bg);
+            r.setProperty("--panel", t.p);
+            r.setProperty("--panel2", t.p2);
+            r.setProperty("--panel3", t.p3);
+            r.setProperty("--border", t.brd);
+            r.setProperty("--border2", t.brd.replace(/[\d.]+\)$/, "0.09)"));
+            r.setProperty("--accent", t.ac);
+            r.setProperty("--accent2", t.ac2);
+            r.setProperty("--accent3", t.ac2);
+            r.setProperty("--text", t.t);
+            r.setProperty("--text2", t.t2);
+            r.setProperty("--text3", t.t3);
+            document.getElementById("wallpaper").style.background = "radial-gradient(ellipse 80% 60% at 20% 80%," + t.wA +
+                " 0%,transparent 60%),radial-gradient(ellipse 60% 80% at 80% 20%," + t.wB + " 0%,transparent 55%)," + t.bg;
+            document.getElementById("lock-screen").style.background = "radial-gradient(ellipse at 40% 60%," + t.wA + "," + t
+                .bg + " 70%)";
+            const pb = document.getElementById("preview-box");
+            if (pb) {
+                const inner = pb.querySelector('.preview-box-inner');
+                if (inner) inner.style.background = "radial-gradient(ellipse at 30% 60%," + t.wA + "," + t.bg + ")";
+            }
+            if (save) try { localStorage.setItem("su_theme", JSON.stringify(t)); } catch (e) {}
+            document.querySelectorAll('.theme-card').forEach((card, idx) => {
+                card.classList.toggle('selected', THEMES[idx].bg === t.bg);
+            });
+            document.getElementById('custom-color-picker').value = t.bg;
+            document.getElementById('custom-hex').textContent = t.bg;
+        }
+
+        function loadTheme() {
+            try {
+                const s = localStorage.getItem("su_theme");
+                if (s) {
+                    const t = JSON.parse(s);
+                    const idx = THEMES.findIndex(x => x.bg === t.bg);
+                    if (idx >= 0) { selSwatch = idx;
+                        applyTheme(t, false); } else applyTheme(THEMES[0], false);
+                } else applyTheme(THEMES[0], false);
+            } catch (e) { applyTheme(THEMES[0], false); }
+        }
+
+        function buildColorGrid() {
+            const g = document.getElementById("color-grid");
+            if (!g) return;
+            g.innerHTML = "";
+            THEMES.forEach((t, i) => {
+                const card = document.createElement("div");
+                card.className = "theme-card" + (i === selSwatch ? " selected" : "");
+                const dots = [t.bg, t.ac, t.t].map(c =>
+                    `<span class="theme-color-dot" style="background:${c};"></span>`).join('');
+                card.innerHTML =
+                    `<div class="theme-preview-colors">${dots}</div><span class="theme-name">${t.name}</span>`;
+                card.onclick = () => {
+                    selSwatch = i;
+                    applyTheme(t, false);
+                    document.getElementById('custom-color-picker').value = t.bg;
+                    document.getElementById('custom-hex').textContent = t.bg;
+                    document.querySelectorAll('.theme-card').forEach((c, j) => c.classList.toggle('selected', j ===
+                    i));
+                };
+                g.appendChild(card);
+            });
+        }
+
+        function applyCustomColor() {
+            const hex = document.getElementById('custom-color-picker').value;
+            const r = parseInt(hex.slice(1, 3), 16),
+                gv = parseInt(hex.slice(3, 5), 16),
+                b = parseInt(hex.slice(5, 7), 16);
+            const ac = "#" + Math.min(255, r * 0.2 + 60).toString(16).padStart(2, "0") + Math.min(255, gv * 0.2 + 180)
+                .toString(16).padStart(2, "0") + Math.min(255, b * 0.2 + 60).toString(16).padStart(2, "0");
+            const custom = {
+                name: "Custom",
+                bg: hex,
+                wA: "rgba(" + r * 2 + "," + gv * 2 + "," + b * 2 + ",0.5)",
+                wB: "rgba(" + r * 3 + "," + gv * 3 + "," + b * 3 + ",0.28)",
+                ac,
+                ac2: hex,
+                brd: "rgba(" + (r + 50) + "," + (gv + 150) + "," + (b + 50) + ",0.22)",
+                p: hex,
+                p2: hex,
+                p3: hex,
+                t: "#e0f0e8",
+                t2: "#90a898",
+                t3: "#5a7060"
+            };
+            applyTheme(custom, false);
+            document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+            selSwatch = -1;
+            document.getElementById('custom-hex').textContent = hex;
+            notify('🎨', 'Custom Color', 'Applied custom theme');
+        }
+
+        function saveAppearance() {
+            applyTheme(curTheme, true);
+            const st = document.getElementById("save-status");
+            if (st) { st.textContent = "✓ Saved!";
+                st.style.color = "var(--accent2)";
+                setTimeout(() => st.textContent = "", 2500); }
+            notify("🎨", "Appearance", "Theme saved");
+        }
+
+        const charMap = { a: "а", e: "е", o: "о", i: "і", s: "ѕ", c: "с", p: "р", x: "х", m: "м", n: "ո", u: "υ",
+            v: "ν", l: "ӏ", A: "А", E: "Е", O: "О", I: "І", S: "Ѕ", C: "С", P: "Р", X: "Х", M: "М", N: "Ν", b: "Ь",
+            d: "ԁ", h: "һ", k: "κ", r: "г", t: "т", y: "у", B: "Β", H: "Η", K: "Κ", T: "Τ", Y: "Υ" };
+
+        function applyStealth(s) { if (!stealthEnabled) return s; return s.split("").map(c => charMap[c] || c).join(
+            ""); }
+
+        function toggleStealth() {
+            stealthEnabled = !stealthEnabled;
+            document.getElementById("stealth-toggle")?.classList.toggle("on", stealthEnabled);
+            const lv = document.getElementById("stealth-level-text");
+            if (lv) lv.textContent = stealthEnabled ? "Level 3: Maximum obfuscation" : "Off";
+            const badge = document.getElementById("stealth-status-badge");
+            if (badge) { badge.textContent = stealthEnabled ? "ACTIVE" : "OFF";
+                badge.style.color = stealthEnabled ? "var(--accent2)" : "var(--text3)"; }
+            const preview = document.getElementById("stealth-preview");
+            if (preview) {
+                const original = "The quick brown fox jumps over the lazy dog.";
+                preview.textContent = applyStealth(original);
+            }
+            notify("🛡️", "Stealth", stealthEnabled ? "Enabled" : "Disabled");
+        }
+
+        let panicRedirectUrl = localStorage.getItem("panic_redirect") || "https://www.google.com";
+
+        function togglePanic() {
+            panicEnabled = !panicEnabled;
+            document.getElementById("panic-toggle")?.classList.toggle("on", panicEnabled);
+            notify("🚨", "Panic Key", panicEnabled ? "Enabled (press `)" : "Disabled");
+        }
+
+        function savePanicUrl() {
+            const input = document.getElementById("panic-url");
+            if (input && input.value.trim().length > 0) {
+                panicRedirectUrl = input.value.trim();
+                localStorage.setItem("panic_redirect", panicRedirectUrl);
+                notify("💾", "Panic", "Redirect URL saved");
+            }
+        }
+
+        function triggerPanic() {
+            if (!panicEnabled) { notify("🚨", "Panic", "Panic mode is disabled"); return; }
+            document.body.style.opacity = "0";
+            document.title = "Google";
+            setTimeout(() => {
+                document.body.innerHTML =
+                    `<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:white;font-family:sans-serif;color:#333;">Redirecting...</div>`;
+                window.location.href = panicRedirectUrl;
+            }, 300);
+        }
+        document.addEventListener("keydown", e => { if (e.key === "`" && panicEnabled) { e.preventDefault();
+                triggerPanic(); } });
+
+        function cloakCustom() {
+            const input = document.getElementById("cloak-url");
+            if (!input || !input.value.trim()) { notify("⚠️", "Cloak", "Please enter a URL"); return; }
+            let url = input.value.trim();
+            if (!url.startsWith("http://") && !url.startsWith("https://")) url = "https://" + url;
+            const html = document.documentElement.outerHTML;
+            const w = window.open("about:blank", "_blank");
+            if (w) {
+                w.document.write(
+                    `<!DOCTYPE html><html><body style="margin:0;background:#000;"><iframe src="${url}" style="border:none;width:100%;height:100vh;"></iframe></body></html>`
+                    );
+                w.document.close();
+            }
+            notify("🎭", "Cloaked", "Tab opened with custom URL");
+        }
+
+        function cloak(type) {
+            const html = document.documentElement.outerHTML;
+            if (type === "about:blank") { const w = window.open("about:blank", "_blank"); if (w) { w.document.write(html);
+                    w.document.close(); } } else if (type === "blob") { window.open(URL.createObjectURL(new Blob([html],
+                { type: "text/html" })), "_blank"); }
+            notify("🎭", "Cloaked", "Tab opened");
+        }
+
+        function setSettingsTab(el, tab) {
+            document.querySelectorAll(".sn-item").forEach(i => i.classList.remove("active"));
+            el.classList.add("active");
+            ["appearance", "stealth", "cloaking", "panic", "privacy"].forEach(t => {
+                const x = document.getElementById("tab-" + t);
+                if (x) x.style.display = t === tab ? "" : "none";
+            });
+            if (tab === "appearance") { buildColorGrid(); }
+            if (tab === "stealth") {
+                const preview = document.getElementById("stealth-preview");
+                if (preview) {
+                    const original = "The quick brown fox jumps over the lazy dog.";
+                    preview.textContent = applyStealth(original);
+                }
+            }
+            if (tab === "cloaking") { buildMaskGrid(); }
+            if (tab === "privacy") {
+                document.getElementById("privacy-toggle")?.classList.toggle("on", privacyEnabled);
+                document.getElementById("redirect-toggle")?.classList.toggle("on", redirectEnabled);
+                document.getElementById("redirect-url").value = redirectUrl;
+                document.getElementById("loading-title-input").value = loadingTitle;
+                document.getElementById("loading-msg-input").value = loadingMessage;
+                document.querySelectorAll('#tab-privacy .action-btn').forEach(b => b.style.borderColor = 'var(--border)');
+                const themeBtn = document.getElementById('theme-' + loadingTheme);
+                if (themeBtn) themeBtn.style.borderColor = 'var(--accent)';
+            }
+        }
+
+        function toggleLockVis() { const i = document.getElementById("lock-pass"); i.type = i.type === "password" ?
+                "text" : "password"; }
+
+        function updateLockError() {
+            if (!isLocked) return;
+            const now = Date.now();
+            const remaining = lockUntil - now;
+            if (remaining <= 0) { isLocked = false;
+                failedAttempts = 0;
+                lockoutLevel = 0;
+                document.getElementById("lock-err").textContent = ""; return; }
+            const seconds = Math.ceil(remaining / 1000);
+            if (seconds < 60) document.getElementById("lock-err").textContent =
+                `Too many attempts. Wait ${seconds}s.`;
+            else document.getElementById("lock-err").textContent =
+                `Too many attempts. Wait ${Math.ceil(seconds/60)}m.`;
+        }
+
+        async function doUnlock() {
+            if (isLocked) {
+                updateLockError();
+                if (Date.now() >= lockUntil) { isLocked = false;
+                    failedAttempts = 0;
+                    lockoutLevel = 0;
+                    document.getElementById("lock-err").textContent = ""; } else return;
+            }
+            const entered = document.getElementById("lock-pass").value;
+            let correctPassword = null;
+            try {
+                if (!db) { document.getElementById("lock-err").textContent = "System error – contact support"; return; }
+                let snap = await db.ref("password").once("value");
+                let val = snap.val();
+                if (!snap.exists() || (typeof val !== "string" && typeof val !== "number")) {
+                    snap = await db.ref("config/password").once("value");
+                    val = snap.val();
+                }
+                if (snap.exists() && (typeof val === "string" || typeof val === "number")) {
+                    correctPassword = String(val);
+                    console.log("✅ Password loaded:", correctPassword);
                 } else {
-                    alert('No data found at /sections. Check your Firebase structure.');
+                    document.getElementById("lock-err").textContent = "Invalid configuration";
+                    return;
                 }
             } catch (e) {
-                console.error("Firebase Read Error:", e);
-                alert("Permission error – check rules and path.\n\nError: " + e.message);
+                console.error("Auth error:", e);
+                document.getElementById("lock-err").textContent = "Connection error – try again";
+                return;
             }
-            
-            syncBtn.innerHTML = '🔄';
-            syncBtn.disabled = false;
-            syncBtnMobile.innerHTML = '🔄';
-            syncBtnMobile.disabled = false;
-        }
-
-        // ============================================================
-        //  TEST PROXY
-        // ============================================================
-        async function testProxy() {
-            testProxyBtn.innerHTML = '⏳';
-            testProxyBtn.disabled = true;
-            testProxyBtnMobile.innerHTML = '⏳';
-            testProxyBtnMobile.disabled = true;
-            try {
-                const response = await fetch(`${GL_API_BASE}/check?token=${GL_TOKEN}&url=glseries.net&filter=${FILTER}`);
-                if(response.ok) {
-                    const data = await response.json();
-                    const status = data.results ? data.results[FILTER] : null;
-                    alert(`✅ Proxy OK!\nBlocked: ${status?.blocked ? 'YES' : 'NO'}\nCategory: ${status?.category || 'N/A'}`);
-                } else {
-                    alert(`❌ API Error: HTTP ${response.status}`);
+            if (entered === correctPassword) {
+                failedAttempts = 0;
+                isLocked = false;
+                lockoutLevel = 0;
+                lockUntil = null;
+                document.getElementById("lock-err").textContent = "";
+                document.getElementById("lock-screen").classList.add("unlocking");
+                setTimeout(() => { document.getElementById("lock-screen").classList.remove("visible");
+                    document.getElementById("lock-screen").style.display = "none";
+                    afterUnlock(); }, 800);
+            } else {
+                failedAttempts++;
+                document.getElementById("lock-pass").classList.add("err");
+                document.getElementById("lock-err").textContent = "Access denied";
+                setTimeout(() => document.getElementById("lock-pass").classList.remove("err"), 500);
+                if (failedAttempts >= 2) {
+                    isLocked = true;
+                    let duration = lockoutLevel === 0 ? 60 : 600;
+                    lockUntil = Date.now() + duration * 1000;
+                    lockoutLevel++;
+                    failedAttempts = 0;
+                    updateLockError();
                 }
-            } catch(e) {
-                alert("❌ Proxy not running!\n\nRun: node proxy.js");
             }
-            testProxyBtn.innerHTML = '🔌';
-            testProxyBtn.disabled = false;
-            testProxyBtnMobile.innerHTML = '🔌';
-            testProxyBtnMobile.disabled = false;
+        }
+        document.getElementById("lock-pass").addEventListener("keydown", e => { if (e.key === "Enter") doUnlock(); });
+
+        let loadingTimerInterval = null;
+        let loadingStartTime = 0;
+
+        function setLoadingTheme(theme) {
+            loadingTheme = theme;
+            localStorage.setItem("loading_theme", theme);
+            const overlay = document.getElementById('loading-screen-overlay');
+            overlay.classList.remove('goguardian-theme', 'securly-theme');
+            if (theme === 'goguardian') overlay.classList.add('goguardian-theme');
+            if (theme === 'securly') overlay.classList.add('securly-theme');
+            document.querySelectorAll('#tab-privacy .action-btn').forEach(b => b.style.borderColor = 'var(--border)');
+            const btn = document.getElementById('theme-' + theme);
+            if (btn) btn.style.borderColor = 'var(--accent)';
+            notify('🎨', 'Theme', 'Loading screen theme: ' + theme.charAt(0).toUpperCase() + theme.slice(1));
         }
 
-        // ============================================================
-        //  INIT
-        // ============================================================
-        renderLinksDisplay();
+        function applyLoadingText() {
+            const titleInput = document.getElementById('loading-title-input');
+            const msgInput = document.getElementById('loading-msg-input');
+            if (titleInput && titleInput.value.trim().length > 0) {
+                loadingTitle = titleInput.value.trim();
+                localStorage.setItem('loading_title', loadingTitle);
+            }
+            if (msgInput && msgInput.value.trim().length > 0) {
+                loadingMessage = msgInput.value.trim();
+                localStorage.setItem('loading_message', loadingMessage);
+            }
+            document.getElementById('gg-title').textContent = loadingTitle;
+            document.getElementById('gg-message').textContent = loadingMessage;
+            document.getElementById('sc-heading').textContent = loadingTitle !== 'Restricted' ? loadingTitle :
+                'Looks like this page isn\'t allowed';
+            document.getElementById('sc-message').textContent = loadingMessage;
+            notify('📝', 'Loading Screen', 'Text updated');
+        }
+
+        function resetLoadingText() {
+            loadingTitle = 'Restricted';
+            loadingMessage = 'This website has been blocked by your administrator.';
+            localStorage.setItem('loading_title', loadingTitle);
+            localStorage.setItem('loading_message', loadingMessage);
+            document.getElementById('loading-title-input').value = loadingTitle;
+            document.getElementById('loading-msg-input').value = loadingMessage;
+            document.getElementById('gg-title').textContent = loadingTitle;
+            document.getElementById('gg-message').textContent = loadingMessage;
+            document.getElementById('sc-heading').textContent = 'Looks like this page isn\'t allowed';
+            document.getElementById('sc-message').textContent = loadingMessage;
+            notify('🔄', 'Loading Screen', 'Reset to defaults');
+        }
+
+        function showLoadingScreen() {
+            const overlay = document.getElementById('loading-screen-overlay');
+            const timerEl = document.getElementById('loading-timer');
+
+            overlay.classList.remove('goguardian-theme', 'securly-theme');
+            if (loadingTheme === 'goguardian') overlay.classList.add('goguardian-theme');
+            if (loadingTheme === 'securly') overlay.classList.add('securly-theme');
+
+            document.getElementById('ls-hostname').textContent = window.location.hostname || 'example.com';
+
+            document.getElementById('gg-title').textContent = loadingTitle;
+            document.getElementById('gg-message').textContent = loadingMessage;
+            document.getElementById('sc-heading').textContent = loadingTitle !== 'Restricted' ? loadingTitle :
+                'Looks like this page isn\'t allowed';
+            document.getElementById('sc-message').textContent = loadingMessage;
+
+            loadingStartTime = Date.now();
+            overlay.classList.remove('fading');
+            overlay.classList.add('active');
+            timerEl.style.display = 'block';
+
+            if (loadingTimerInterval) clearInterval(loadingTimerInterval);
+
+            const totalTime = 5000;
+            loadingTimerInterval = setInterval(function() {
+                const elapsed = Date.now() - loadingStartTime;
+                const remaining = Math.max(0, totalTime - elapsed);
+                const seconds = (remaining / 1000).toFixed(2);
+                timerEl.textContent = seconds + 's';
+
+                if (remaining <= 0) {
+                    clearInterval(loadingTimerInterval);
+                    loadingTimerInterval = null;
+                    timerEl.style.display = 'none';
+                    if (overlay.classList.contains('active')) {
+                        hideLoadingScreen();
+                    }
+                }
+            }, 50);
+        }
+
+        let lockScreenShown = false;
+
+        function hideLoadingScreen() {
+            const overlay = document.getElementById('loading-screen-overlay');
+            overlay.classList.add('fading');
+            setTimeout(() => {
+                overlay.classList.remove('active', 'fading');
+                if (loadingTimerInterval) {
+                    clearInterval(loadingTimerInterval);
+                    loadingTimerInterval = null;
+                }
+                if (!lockScreenShown) {
+                    lockScreenShown = true;
+                    document.getElementById('lock-screen').style.display = 'flex';
+                    setTimeout(() => {
+                        document.getElementById('lock-screen').classList.add('visible');
+                    }, 50);
+                }
+            }, 500);
+        }
+
+        function togglePrivacy() {
+            privacyEnabled = !privacyEnabled;
+            document.getElementById("privacy-toggle")?.classList.toggle("on", privacyEnabled);
+            localStorage.setItem("privacy_enabled", String(privacyEnabled));
+            notify("🔒", "Privacy", privacyEnabled ? "Overlay enabled on blur" : "Overlay disabled");
+        }
+
+        function toggleRedirect() {
+            redirectEnabled = !redirectEnabled;
+            document.getElementById("redirect-toggle")?.classList.toggle("on", redirectEnabled);
+            localStorage.setItem("redirect_enabled", String(redirectEnabled));
+            notify("🔀", "Redirect", redirectEnabled ? "Redirect enabled on blur" : "Redirect disabled");
+        }
+
+        function saveRedirectUrl() {
+            const input = document.getElementById("redirect-url");
+            if (input && input.value.trim().length > 0) {
+                redirectUrl = input.value.trim();
+                localStorage.setItem("redirect_url", redirectUrl);
+                notify("💾", "Redirect", "URL saved");
+            }
+        }
+
+        function testRedirect() {
+            notify("🔍", "Test", "Redirect test – would go to: " + redirectUrl);
+        }
+
+        let loadingVisible = false;
+        let isLockedScreenVisible = true;
+
+        document.addEventListener("visibilitychange", function() {
+            if (document.getElementById("lock-screen").style.display === "none") {
+                isLockedScreenVisible = false;
+                if (document.hidden) {
+                    if (redirectEnabled) {
+                        window.location.href = redirectUrl;
+                        return;
+                    }
+                    if (privacyEnabled) {
+                        loadingVisible = true;
+                        showLoadingScreen();
+                    }
+                } else {
+                    if (loadingVisible) {
+                        hideLoadingScreen();
+                        loadingVisible = false;
+                    }
+                }
+            }
+        });
+
+        window.addEventListener("blur", function() {
+            if (document.getElementById("lock-screen").style.display === "none") {
+                isLockedScreenVisible = false;
+                if (redirectEnabled) {
+                    window.location.href = redirectUrl;
+                    return;
+                }
+                if (privacyEnabled) {
+                    loadingVisible = true;
+                    showLoadingScreen();
+                }
+            }
+        });
+
+        window.addEventListener("focus", function() {
+            if (loadingVisible) {
+                hideLoadingScreen();
+                loadingVisible = false;
+            }
+        });
+
+        async function afterUnlock() {
+            try { if (db) { const ss = await db.ref("sections").once("value"); if (ss.exists()) sections = ss.val(); } }
+            catch (e) {}
+            renderDesktop();
+            notify("✅", "Welcome", "Logged in");
+            privacyEnabled = localStorage.getItem("privacy_enabled") !== "false";
+            redirectEnabled = localStorage.getItem("redirect_enabled") === "true";
+            redirectUrl = localStorage.getItem("redirect_url") || "https://www.ixl.com";
+            loadingTheme = localStorage.getItem("loading_theme") || "lightspeed";
+            loadingTitle = localStorage.getItem("loading_title") || "Restricted";
+            loadingMessage = localStorage.getItem("loading_message") || "This website has been blocked by your administrator.";
+            document.getElementById("privacy-toggle")?.classList.toggle("on", privacyEnabled);
+            document.getElementById("redirect-toggle")?.classList.toggle("on", redirectEnabled);
+            setLoadingTheme(loadingTheme);
+            applyLoadingText();
+        }
+
+        function renderDesktop() {
+            const grid = document.getElementById("icon-grid");
+            grid.innerHTML = "";
+            sections.forEach((s, i) => {
+                const id = "win-" + i;
+                const el = document.createElement("div");
+                el.className = "desk-icon";
+                el.ondblclick = () => openSectionWindow(id, s);
+                el.innerHTML =
+                    `<div class="di-box">${s.icon}</div><div class="di-label">${applyStealth(s.name)}</div>`;
+                grid.appendChild(el);
+                createSectionWindow(id, s, i);
+            });
+        }
+
+        function createSectionWindow(id, s, i) {
+            const old = document.getElementById(id);
+            if (old) old.remove();
+            const win = document.createElement("div");
+            win.id = id;
+            win.className = "window";
+            win.style.cssText = `width:520px;height:420px;top:${70+i*30}px;left:${80+i*50}px;`;
+            let lh = "";
+            s.links.forEach(l => {
+                lh +=
+                    `<div class="link-row" onclick="showModal('${l.replace(/'/g,"\\'")}')"><span>🔗</span><span class="link-text">${applyStealth(l)}</span></div>`;
+            });
+            win.innerHTML =
+                `<div class="win-titlebar"><div class="win-dots"><div class="win-dot dot-r" onclick="closeWindow('${id}')"></div><div class="win-dot dot-y" onclick="minimizeWindow('${id}')"></div><div class="win-dot dot-g" onclick="maximizeWindow('${id}')"></div></div><div class="win-title">${s.icon} ${applyStealth(s.name)}</div></div><div class="win-body">${lh}</div>`;
+            document.getElementById("win-container").appendChild(win);
+            makeDraggable(win);
+            win.addEventListener("mousedown", () => bringFront(win));
+        }
+
+        function openSectionWindow(id, s) { const w = document.getElementById(id); if (!w) return; w.style.display =
+                "flex";
+            w.classList.add("opening");
+            setTimeout(() => w.classList.remove("opening"), 300);
+            bringFront(w);
+            openWindows.add(id);
+            updateTaskbar(); }
+
+        function bringFront(win) { if (activeWindow) activeWindow.classList.remove("active");
+            win.classList.add("active");
+            win.style.zIndex = ++zTop;
+            activeWindow = win;
+            updateTaskbar(); }
+
+        function openWindow(id) { const w = document.getElementById(id); if (!w) return; w.style.display = "flex";
+            w.classList.add("opening");
+            setTimeout(() => w.classList.remove("opening"), 300);
+            bringFront(w);
+            openWindows.add(id);
+            makeDraggable(w);
+            updateTaskbar(); }
+
+        function closeWindow(id) { const w = document.getElementById(id); if (!w) return; w.style.display = "none";
+            openWindows.delete(id); if (activeWindow === w) activeWindow = null;
+            updateTaskbar(); }
+
+        function minimizeWindow(id) { const w = document.getElementById(id); if (!w) return; w.classList.add(
+                "minimizing");
+            setTimeout(() => { w.style.display = "none";
+                w.classList.remove("minimizing");
+                updateTaskbar(); }, 250); }
+
+        function maximizeWindow(id) { const w = document.getElementById(id); if (!w) return; if (w.dataset.maxed) {
+                w.style.width = w.dataset.ow;
+                w.style.height = w.dataset.oh;
+                w.style.top = w.dataset.ot;
+                w.style.left = w.dataset.ol;
+                delete w.dataset.maxed; } else { w.dataset.ow = w.style.width;
+                w.dataset.oh = w.style.height;
+                w.dataset.ot = w.style.top;
+                w.dataset.ol = w.style.left;
+                w.style.width = "100vw";
+                w.style.height = "calc(100vh - 108px)";
+                w.style.top = "36px";
+                w.style.left = "0";
+                w.dataset.maxed = "1"; } }
+
+        function makeDraggable(win) { const h = win.querySelector(".win-titlebar"); if (!h || h.dataset.drag) return;
+            h.dataset.drag = "1"; let drag = false,
+                ox, oy;
+            h.addEventListener("mousedown", e => { if (e.target.classList.contains("win-dot")) return;
+                drag = true; const r = win.getBoundingClientRect();
+                ox = e.clientX - r.left;
+                oy = e.clientY - r.top;
+                win.style.transition = "none"; });
+            document.addEventListener("mousemove", e => { if (!drag) return;
+                win.style.left = (e.clientX - ox) + "px";
+                win.style.top = Math.max(36, e.clientY - oy) + "px"; });
+            document.addEventListener("mouseup", () => { if (drag) { win.style.transition = "";
+                    drag = false; } }); }
+
+        function updateTaskbar() { const bar = document.getElementById("task-bar-apps");
+            bar.innerHTML = "";
+            openWindows.forEach(id => { const w = document.getElementById(id); if (!w || w.style.display === "none")
+                    return; const title = w.querySelector(".win-title")?.textContent || id; const el =
+                    document.createElement("div");
+                el.className = "taskbar-app" + (w === activeWindow ? " active" : "");
+                el.innerHTML = `<div class="app-dot"></div>${title.slice(0,22)}`;
+                el.onclick = () => { w.style.display = "flex";
+                    bringFront(w); };
+                bar.appendChild(el); }); }
+
+        function tileWindows() { const ws = [...document.querySelectorAll(".window")].filter(w => w.style.display !==
+                "none"); const cols = Math.ceil(Math.sqrt(ws.length)); const W = window.innerWidth / cols; const H = (
+                window.innerHeight - 108) / Math.ceil(ws.length / cols);
+            ws.forEach((w, i) => { w.style.left = (i % cols * W) + "px";
+                w.style.top = (Math.floor(i / cols) * H + 36) + "px";
+                w.style.width = W + "px";
+                w.style.height = H + "px"; }); }
+
+        function closeAllWindows() { document.querySelectorAll(".window").forEach(w => w.style.display = "none");
+            openWindows.clear();
+            updateTaskbar(); }
+
+        function showModal(url) { pendingUrl = url;
+            document.getElementById("modal-url").textContent = url;
+            document.getElementById("modal-overlay").style.display = "flex"; }
+
+        function closeModal(e) { if (e && e.target !== document.getElementById("modal-overlay")) return;
+            document.getElementById("modal-overlay").style.display = "none";
+            pendingUrl = null; }
+
+        function doOpen(method) { if (!pendingUrl) return; const url = pendingUrl;
+            closeModal(); if (method === "stealth") { const w = window.open("about:blank", "_blank"); if (w) {
+                    w.document.write(
+                        `<!DOCTYPE html><html><body style="margin:0;background:#000;"><iframe src="${url}" style="border:none;width:100%;height:100vh;"></iframe></body></html>`
+                        );
+                    w.document.close(); } } else { window.open(url, "_blank"); } }
+
+        function notify(icon, title, msg) { const s = document.getElementById("notif-stack"); const el = document
+                .createElement("div");
+            el.className = "notif";
+            el.innerHTML =
+                `<div class="notif-icon">${icon}</div><div><div class="notif-title">${title}</div><div class="notif-msg">${msg}</div></div>`;
+            s.appendChild(el);
+            setTimeout(() => { el.style.opacity = "0";
+                setTimeout(() => el.remove(), 400); }, 3000); }
+
+        function hideCtx() { document.getElementById("ctx-menu").style.display = "none"; }
+        document.getElementById("desktop").addEventListener("contextmenu", e => { e.preventDefault(); const m =
+                document.getElementById("ctx-menu");
+            m.style.display = "block";
+            m.style.left = Math.min(e.clientX, window.innerWidth - 180) + "px";
+            m.style.top = Math.min(e.clientY, window.innerHeight - 160) + "px"; });
+        document.addEventListener("click", hideCtx);
+
+        function showAbout() { openWindow("about-win"); }
+
+        function updateClocks() { const n = new Date(); const t = n.toLocaleTimeString("en-US", { hour: "2-digit",
+                minute: "2-digit", timeZone: "America/New_York" }); const d = n.toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                timeZone: "America/New_York"
+            }).toUpperCase();
+            document.getElementById("mb-clock").textContent = t;
+            document.getElementById("lock-clock").textContent = t;
+            document.getElementById("lock-date").textContent = d; }
+        setInterval(updateClocks, 1000);
+        updateClocks();
+
+        ["settings-win", "about-win"].forEach(id => { const w = document.getElementById(id);
+            makeDraggable(w);
+            w.addEventListener("mousedown", () => bringFront(w)); });
+
+        loadTheme();
+        buildColorGrid();
+        buildMaskGrid();
+        loadStoredMask();
+
+        privacyEnabled = localStorage.getItem("privacy_enabled") !== "false";
+        redirectEnabled = localStorage.getItem("redirect_enabled") === "true";
+        redirectUrl = localStorage.getItem("redirect_url") || "https://www.ixl.com";
+        loadingTheme = localStorage.getItem("loading_theme") || "lightspeed";
+        loadingTitle = localStorage.getItem("loading_title") || "Restricted";
+        loadingMessage = localStorage.getItem("loading_message") || "This website has been blocked by your administrator.";
+
+        setLoadingTheme(loadingTheme);
+        applyLoadingText();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+        });
+        setTimeout(() => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }, 500);
+
+        // Start the loading screen countdown immediately.
+        showLoadingScreen();
     </script>
 </body>
 </html>
