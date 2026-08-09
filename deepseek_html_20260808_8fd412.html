@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Link Companion Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        bgMain: '#09090b',
+                        cardBg: '#121214',
+                        cardBorder: '#27272a',
+                        textMuted: '#a1a1aa',
+                        dangerBg: 'rgba(69, 26, 30, 0.4)',
+                        dangerBorder: 'rgba(127, 29, 29, 0.5)',
+                        successBg: 'rgba(20, 51, 35, 0.4)',
+                        successBorder: 'rgba(20, 83, 45, 0.5)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        body {
+            background-color: #09090b;
+            background-image: radial-gradient(circle at 80% 20%, #1f1f2e 0%, transparent 50%), radial-gradient(circle at 20% 80%, #15151a 0%, transparent 50%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+        
+        .glass {
+            background: rgba(18, 18, 20, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(39, 39, 42, 0.5);
+        }
+        .glass-light {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        
+        .result-row {
+            opacity: 0;
+            transform: translateY(8px);
+            animation: fadeInRow 0.35s ease forwards;
+        }
+        @keyframes fadeInRow {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.15rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .status-badge.blocked { background: #7f1d1d; color: #fca5a5; }
+        .status-badge.ok { background: #14532d; color: #86efac; }
+        .status-badge.error { background: #1e293b; color: #94a3b8; }
+        
+        .stat-badge {
+            display: inline-block;
+            padding: 0.2rem 0.7rem;
+            border-radius: 9999px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            font-family: ui-monospace, monospace;
+        }
+        .stat-total { background: #27272a; color: #e4e4e7; }
+        .stat-ok { background: #14532d; color: #4ade80; }
+        .stat-blocked { background: #7f1d1d; color: #f87171; }
+        .stat-errors { background: #1e293b; color: #94a3b8; }
+        
+        .error-detail {
+            font-size: 0.55rem;
+            color: #f87171;
+            background: rgba(127, 29, 29, 0.3);
+            padding: 0.15rem 0.5rem;
+            border-radius: 0.25rem;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .sidebar-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            background: transparent;
+            color: #a1a1aa;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .sidebar-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #e4e4e7;
+        }
+        .sidebar-btn.active {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar-btn.primary {
+            background: #ea580c;
+            color: white;
+        }
+        .sidebar-btn.primary:hover {
+            background: #f97316;
+        }
+        .sidebar-btn .icon {
+            font-size: 1.1rem;
+            width: 1.5rem;
+            text-align: center;
+        }
+        
+        .mode-selector {
+            display: flex;
+            background: rgba(255,255,255,0.05);
+            border-radius: 0.75rem;
+            padding: 0.2rem;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .mode-selector button {
+            flex: 1;
+            padding: 0.3rem 0.5rem;
+            border-radius: 0.6rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            color: #71717a;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-selector button.active {
+            background: #3f3f46;
+            color: #e4e4e7;
+        }
+        .mode-selector button:hover:not(.active) {
+            color: #a1a1aa;
+        }
+        
+        .link-remove {
+            cursor: pointer;
+            color: #52525b;
+            font-size: 0.8rem;
+            line-height: 1;
+            padding: 0 0.2rem;
+            transition: color 0.2s;
+        }
+        .link-remove:hover { color: #ef4444; }
+        
+        .input-area {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 1rem;
+            padding: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            transition: border-color 0.3s;
+        }
+        .input-area:focus-within {
+            border-color: rgba(234, 88, 12, 0.5);
+        }
+        .input-area input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            padding: 0.6rem 0.8rem;
+            flex: 1;
+            font-size: 0.9rem;
+        }
+        .input-area input::placeholder {
+            color: #52525b;
+        }
+        .input-area button {
+            background: #ea580c;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .input-area button:hover {
+            background: #f97316;
+        }
+        .input-area button:active {
+            transform: scale(0.96);
+        }
+    </style>
+</head>
+<body class="text-zinc-200 font-sans selection:bg-white selection:text-black">
+
+    <div class="flex min-h-screen max-w-6xl mx-auto px-4 py-6 gap-6">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-56 flex-shrink-0 hidden md:block">
+            <div class="glass rounded-2xl p-4 sticky top-6 space-y-4">
+                
+                <div class="flex items-center gap-3 pb-2 border-b border-zinc-800/50">
+                    <span class="text-2xl">⚡</span>
+                    <div>
+                        <h1 class="font-bold text-white text-lg leading-tight">Link Pro</h1>
+                        <p class="text-[10px] text-zinc-500 uppercase tracking-wider">Companion</p>
+                    </div>
+                </div>
+
+                <button id="syncBtn" class="sidebar-btn">
+                    <span class="icon">🔄</span> Sync Firebase
+                </button>
+
+                <button id="testProxyBtn" class="sidebar-btn">
+                    <span class="icon">🔌</span> Test Proxy
+                </button>
+
+                <div class="pt-2">
+                    <p class="text-[10px] uppercase text-zinc-500 tracking-wider mb-1.5">Mode</p>
+                    <div class="mode-selector">
+                        <button id="modeBlock" class="active">🛡️ Block</button>
+                        <button id="modePing">📡 Ping</button>
+                    </div>
+                </div>
+
+                <button id="checkAllBtn" class="sidebar-btn primary">
+                    <span class="icon">⚡</span> Check All Links
+                </button>
+
+                <div class="pt-2 border-t border-zinc-800/50 text-[10px] text-zinc-500 space-y-1">
+                    <div class="flex justify-between"><span>Checked</span><span id="totalBadgeMini" class="font-mono">0</span></div>
+                    <div class="flex justify-between"><span>OK</span><span id="okBadgeMini" class="font-mono text-green-400">0</span></div>
+                    <div class="flex justify-between"><span>Blocked</span><span id="blockedBadgeMini" class="font-mono text-red-400">0</span></div>
+                    <div class="flex justify-between"><span>Errors</span><span id="errorsBadgeMini" class="font-mono text-zinc-400">0</span></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 min-w-0 space-y-5">
+            
+            <div class="flex items-center justify-between md:hidden">
+                <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <span>⚡</span> Link Pro
+                </h1>
+                <div class="flex gap-2">
+                    <button id="syncBtnMobile" class="circle-btn sync" title="Sync Firebase">🔄</button>
+                    <button id="testProxyBtnMobile" class="circle-btn test" title="Test Proxy">🔌</button>
+                </div>
+            </div>
+
+            <div class="glass rounded-2xl p-5">
+                <h2 class="text-sm font-semibold text-zinc-300 mb-2">Add URLs</h2>
+                <div class="input-area">
+                    <input type="text" id="customUrlInput" placeholder="Paste one or multiple URLs (newline, comma, or space separated) ..." />
+                    <button id="scanBtn">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                        Scan
+                    </button>
+                </div>
+                <div class="flex gap-2 mt-2 flex-wrap">
+                    <span class="text-[10px] text-zinc-500">Try:</span>
+                    <button onclick="document.getElementById('customUrlInput').value='glseries.net'" class="border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 px-2.5 py-0.5 rounded-lg text-[11px] transition-colors">glseries.net</button>
+                    <button onclick="document.getElementById('customUrlInput').value='google.com'" class="border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 px-2.5 py-0.5 rounded-lg text-[11px] transition-colors">google.com</button>
+                    <button onclick="document.getElementById('customUrlInput').value='youtube.com'" class="border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 px-2.5 py-0.5 rounded-lg text-[11px] transition-colors">youtube.com</button>
+                </div>
+            </div>
+
+            <div class="glass rounded-2xl p-5">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-sm font-semibold text-zinc-300">Loaded Links</h2>
+                    <span id="linkCount" class="text-[10px] text-zinc-500 font-mono">0</span>
+                </div>
+                <div id="linksDisplayZone" class="space-y-1 max-h-48 overflow-y-auto pr-1">
+                    <p class="text-xs italic text-zinc-600 text-center py-3">No links yet. Add some above.</p>
+                </div>
+            </div>
+
+            <div id="resultsWrapper" class="hidden space-y-4 transition-all duration-500 opacity-0 translate-y-2">
+                
+                <div class="glass rounded-2xl p-4 flex flex-wrap justify-between items-center gap-2">
+                    <span id="progressText" class="text-xs font-semibold text-zinc-400">Awaiting Execution</span>
+                    <div class="flex gap-1 text-[10px] font-mono font-bold flex-wrap">
+                        <span id="totalBadge" class="stat-badge stat-total">0 checked</span>
+                        <span id="successBadge" class="stat-badge stat-ok">0 OK</span>
+                        <span id="errorBadge" class="stat-badge stat-blocked">0 BLOCKED</span>
+                        <span id="errorCountBadge" class="stat-badge stat-errors hidden">0 errors</span>
+                    </div>
+                </div>
+
+                <div class="glass rounded-2xl p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center gap-2 font-mono text-xs font-bold text-white">
+                            🌎 <span id="currentTargetDisplay" class="truncate max-w-[200px]">awaiting...</span>
+                        </div>
+                        <button id="clearBtn" class="p-1.5 rounded-lg text-zinc-500 hover:text-white transition-colors bg-zinc-900 border border-zinc-800 text-xs">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden shadow-inner">
+                            <div id="progressFillGreen" class="h-full bg-green-500 transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <span id="progressPercent" class="text-yellow-500 font-bold text-xs tracking-wide">0%</span>
+                    </div>
+                </div>
+
+                <div id="resultsList" class="space-y-1.5 pb-4"></div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // ============================================================
+        //  CONFIG
+        // ============================================================
+        const GL_API_BASE = 'http://localhost:3000';
+        const GL_TOKEN = 'gl_87181404ca1618e1a040c0457d059cc9e572231729bff9d8';
+        const FILTER = 'goguardian';
+
+        // ============================================================
+        //  FIREBASE INIT
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmJ5h-Ax9So9EvascO4cLAC0Uqd8Y8VHQ",
+            authDomain: "canvas-hub-e6135.firebaseapp.com",
+            databaseURL: "https://canvas-hub-e6135-default-rtdb.firebaseio.com",
+            projectId: "canvas-hub-e6135",
+            storageBucket: "canvas-hub-e6135.firebasestorage.app",
+            messagingSenderId: "761210776673",
+            appId: "1:761210776673:web:b06b4dd5d49cee154ace20",
+            measurementId: "G-XS5J5VG6S7"
+        };
+        try { if (!firebase.apps.length) firebase.initializeApp(firebaseConfig); } catch(e) { console.error('Firebase init error:', e); }
+        const database = firebase.database();
+
+        // ============================================================
+        //  STATE
+        // ============================================================
+        let runtimeLinks = [];
+        let isChecking = false;
+        let currentMode = 'block';
+
+        // ============================================================
+        //  DOM REFS
+        // ============================================================
+        const customUrlInput = document.getElementById('customUrlInput');
+        const scanBtn = document.getElementById('scanBtn');
+        const resultsWrapper = document.getElementById('resultsWrapper');
+        const resultsList = document.getElementById('resultsList');
+        const linksDisplayZone = document.getElementById('linksDisplayZone');
+        const currentTargetDisplay = document.getElementById('currentTargetDisplay');
+        const progressFillGreen = document.getElementById('progressFillGreen');
+        const progressPercent = document.getElementById('progressPercent');
+        const progressText = document.getElementById('progressText');
+        const totalBadge = document.getElementById('totalBadge');
+        const successBadge = document.getElementById('successBadge');
+        const errorBadge = document.getElementById('errorBadge');
+        const errorCountBadge = document.getElementById('errorCountBadge');
+        const clearBtn = document.getElementById('clearBtn');
+        const syncBtn = document.getElementById('syncBtn');
+        const syncBtnMobile = document.getElementById('syncBtnMobile');
+        const testProxyBtn = document.getElementById('testProxyBtn');
+        const testProxyBtnMobile = document.getElementById('testProxyBtnMobile');
+        const checkAllBtn = document.getElementById('checkAllBtn');
+        const modeBlock = document.getElementById('modeBlock');
+        const modePing = document.getElementById('modePing');
+        const linkCount = document.getElementById('linkCount');
+        const totalBadgeMini = document.getElementById('totalBadgeMini');
+        const okBadgeMini = document.getElementById('okBadgeMini');
+        const blockedBadgeMini = document.getElementById('blockedBadgeMini');
+        const errorsBadgeMini = document.getElementById('errorsBadgeMini');
+
+        // ============================================================
+        //  SYNC BUTTONS (desktop + mobile)
+        // ============================================================
+        syncBtn.addEventListener('click', syncFirebase);
+        syncBtnMobile.addEventListener('click', syncFirebase);
+        testProxyBtn.addEventListener('click', testProxy);
+        testProxyBtnMobile.addEventListener('click', testProxy);
+
+        // ============================================================
+        //  MODE TOGGLE
+        // ============================================================
+        modeBlock.addEventListener('click', () => {
+            currentMode = 'block';
+            modeBlock.classList.add('active');
+            modePing.classList.remove('active');
+        });
+        modePing.addEventListener('click', () => {
+            currentMode = 'ping';
+            modePing.classList.add('active');
+            modeBlock.classList.remove('active');
+        });
+
+        // ============================================================
+        //  RENDER LINKS
+        // ============================================================
+        function renderLinksDisplay() {
+            linksDisplayZone.innerHTML = '';
+            linkCount.textContent = runtimeLinks.length;
+            if (runtimeLinks.length === 0) {
+                linksDisplayZone.innerHTML = `<p class="text-xs italic text-zinc-600 text-center py-3">No links yet. Add some above.</p>`;
+                return;
+            }
+            runtimeLinks.forEach((item, index) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between gap-3 p-1.5 bg-zinc-900/50 border border-zinc-800 rounded-lg text-xs';
+                
+                let removeHtml = '';
+                if (item.origin === 'Custom') {
+                    removeHtml = `<span class="link-remove" data-url="${item.url}">×</span>`;
+                }
+                
+                row.innerHTML = `
+                    <div class="flex items-center gap-2 truncate flex-1">
+                        <span class="text-zinc-500 font-bold select-none w-4 text-right text-[10px]">${index + 1}</span>
+                        <span class="truncate text-zinc-300 font-mono text-[11px]">${item.url}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <span class="text-[9px] uppercase font-bold px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">${item.origin}</span>
+                        ${removeHtml}
+                    </div>
+                `;
+                linksDisplayZone.appendChild(row);
+                
+                if (item.origin === 'Custom') {
+                    const removeBtn = row.querySelector('.link-remove');
+                    removeBtn.addEventListener('click', () => {
+                        runtimeLinks = runtimeLinks.filter(link => link.url !== item.url);
+                        renderLinksDisplay();
+                    });
+                }
+            });
+        }
+
+        // ============================================================
+        //  SMART SPLIT
+        // ============================================================
+        function splitUrls(input) {
+            if (input.includes('\n')) {
+                return input.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+            }
+            if (input.includes(',')) {
+                return input.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            }
+            if (input.includes(' ') && input.includes('://')) {
+                const parts = input.split(/\s+/).filter(s => s.length > 0);
+                if (parts.length > 1 && parts.every(p => p.includes('://') || p.includes('.'))) {
+                    return parts;
+                }
+            }
+            return [input];
+        }
+
+        // ============================================================
+        //  ADD AND SCAN
+        // ============================================================
+        function addAndScanUrls(input) {
+            const rawUrls = splitUrls(input);
+            const urlsToCheck = [];
+            let added = 0;
+            
+            rawUrls.forEach(raw => {
+                let cleanUrl = raw.trim();
+                if (!cleanUrl) return;
+                if (!/^https?:\/\//i.test(cleanUrl)) {
+                    cleanUrl = 'https://' + cleanUrl;
+                }
+                if (!runtimeLinks.some(item => item.url === cleanUrl)) {
+                    runtimeLinks.push({ url: cleanUrl, origin: 'Custom' });
+                    added++;
+                }
+                urlsToCheck.push(cleanUrl);
+            });
+            
+            renderLinksDisplay();
+            if (urlsToCheck.length > 0) {
+                customUrlInput.value = '';
+                runCheck(urlsToCheck);
+            } else {
+                alert('No valid URLs found.');
+            }
+        }
+
+        scanBtn.addEventListener('click', () => {
+            const input = customUrlInput.value.trim();
+            if (!input) { alert('Please enter a URL.'); return; }
+            addAndScanUrls(input);
+        });
+
+        customUrlInput.addEventListener('keypress', (e) => { 
+            if (e.key === 'Enter') scanBtn.click(); 
+        });
+
+        // ============================================================
+        //  EXTRACT LINKS (Firebase)
+        // ============================================================
+        function extractLinksFromObject(obj, extracted = []) {
+            if (!obj) return extracted;
+            if (typeof obj === 'string') {
+                let trimmed = obj.trim();
+                if (/^https?:\/\//i.test(trimmed) || (trimmed.includes('.') && !trimmed.includes(' '))) {
+                    extracted.push(trimmed);
+                }
+            } else if (Array.isArray(obj)) {
+                obj.forEach(item => extractLinksFromObject(item, extracted));
+            } else if (typeof obj === 'object') {
+                Object.values(obj).forEach(val => extractLinksFromObject(val, extracted));
+            }
+            return extracted;
+        }
+
+        // ============================================================
+        //  UPDATE STATS (main + mini)
+        // ============================================================
+        function updateStats(total, ok, blocked, errors) {
+            totalBadge.textContent = `${total} checked`;
+            successBadge.textContent = `${ok} OK`;
+            errorBadge.textContent = `${blocked} BLOCKED`;
+            if (errors > 0) {
+                errorCountBadge.classList.remove('hidden');
+                errorCountBadge.textContent = `${errors} errors`;
+            } else {
+                errorCountBadge.classList.add('hidden');
+            }
+            // Mini
+            totalBadgeMini.textContent = total;
+            okBadgeMini.textContent = ok;
+            blockedBadgeMini.textContent = blocked;
+            errorsBadgeMini.textContent = errors;
+        }
+
+        // ============================================================
+        //  PING
+        // ============================================================
+        async function pingUrl(url) {
+            const startTime = performance.now();
+            let status = 'unknown', latency = 0, errorMsg = '';
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                const response = await fetch(url, { method: 'HEAD', mode: 'cors', signal: controller.signal })
+                    .catch(() => fetch(url, { method: 'GET', mode: 'cors', signal: controller.signal }));
+                clearTimeout(timeoutId);
+                latency = Math.round(performance.now() - startTime);
+                if (response && response.ok) status = 'active';
+                else if (response) { status = 'error'; errorMsg = `HTTP ${response.status}`; }
+                else { status = 'error'; errorMsg = 'No response'; }
+            } catch (err) {
+                latency = Math.round(performance.now() - startTime);
+                if (err.name === 'AbortError') { status = 'timeout'; errorMsg = 'Timeout (5s)'; }
+                else if (err.name === 'TypeError') { status = 'cors'; errorMsg = 'CORS blocked'; }
+                else { status = 'error'; errorMsg = err.message || 'Unknown error'; }
+            }
+            return { status, latency, errorMsg };
+        }
+
+        // ============================================================
+        //  RUN CHECK
+        // ============================================================
+        async function runCheck(urlsToCheck) {
+            if (isChecking) return;
+            isChecking = true;
+
+            resultsWrapper.classList.remove('hidden');
+            setTimeout(() => {
+                resultsWrapper.classList.remove('opacity-0', 'translate-y-2');
+            }, 50);
+            
+            resultsList.innerHTML = '';
+            progressFillGreen.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressText.textContent = 'Starting...';
+            
+            let completed = 0, total = urlsToCheck.length;
+            let okCount = 0, blockedCount = 0, errorCount = 0;
+            
+            currentTargetDisplay.textContent = `1/${total}: ${urlsToCheck[0]}`;
+            updateStats(0, 0, 0, 0);
+
+            const modeLabel = currentMode === 'block' ? 'GoGuardian' : 'Ping';
+
+            for (const url of urlsToCheck) {
+                const row = document.createElement('div');
+                row.className = 'result-row flex justify-between items-center p-3 rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm transition-all';
+                row.innerHTML = `
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <span class="text-base bg-zinc-800 p-1.5 rounded-lg flex-shrink-0">${currentMode === 'block' ? '🛡️' : '📡'}</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="font-bold text-xs text-zinc-100 truncate">${url}</div>
+                            <div class="text-[10px] text-zinc-500">${modeLabel}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <span class="status-badge bg-zinc-800 text-zinc-400 text-[9px]">Checking...</span>
+                        <span class="time-cell text-[10px] text-zinc-600 font-mono">--ms</span>
+                    </div>
+                `;
+                resultsList.appendChild(row);
+
+                const badge = row.querySelector('.status-badge');
+                const timeCell = row.querySelector('.time-cell');
+                
+                let isBlocked = false, category = '—', hasError = false, errorMessage = '';
+
+                if (currentMode === 'block') {
+                    const startTime = performance.now();
+                    try {
+                        const endpoint = `${GL_API_BASE}/check?token=${GL_TOKEN}&url=${encodeURIComponent(url)}&filter=${FILTER}`;
+                        const resp = await fetch(endpoint);
+                        const latency = Math.round(performance.now() - startTime);
+                        timeCell.textContent = `${latency}ms`;
+
+                        if (resp.ok) {
+                            const data = await resp.json();
+                            let filterData = null;
+                            if (data.results && data.results[FILTER]) filterData = data.results[FILTER];
+                            else if (data[FILTER]) filterData = data[FILTER];
+                            else if (data.blocked !== undefined) filterData = data;
+                            
+                            if (filterData && filterData.blocked !== undefined) {
+                                isBlocked = filterData.blocked === true;
+                                category = filterData.category || '—';
+                            } else {
+                                hasError = true;
+                                errorMessage = data.error || 'No filter data';
+                            }
+                        } else {
+                            hasError = true;
+                            errorMessage = `HTTP ${resp.status}`;
+                            try {
+                                const errData = await resp.json();
+                                if (errData.error) errorMessage = errData.error;
+                            } catch(e) {}
+                        }
+                    } catch (e) {
+                        const latency = Math.round(performance.now() - startTime);
+                        timeCell.textContent = `${latency}ms (error)`;
+                        hasError = true;
+                        errorMessage = e.message || 'Network error';
+                        if (errorMessage.includes('ERR_CONNECTION_REFUSED')) {
+                            errorMessage = 'Proxy not running (node proxy.js)';
+                        }
+                    }
+
+                    if (hasError) {
+                        badge.className = 'status-badge error';
+                        badge.textContent = '⚠️ ERROR';
+                        errorCount++;
+                        const errSpan = document.createElement('span');
+                        errSpan.className = 'error-detail';
+                        errSpan.textContent = errorMessage.substring(0, 50);
+                        errSpan.title = errorMessage;
+                        const rightSection = row.querySelector('.flex.items-center.gap-2.flex-shrink-0');
+                        rightSection?.appendChild(errSpan);
+                    } else if (isBlocked) {
+                        row.classList.add('bg-dangerBg', 'border-dangerBorder');
+                        row.classList.remove('bg-zinc-900/50', 'border-zinc-800');
+                        badge.className = 'status-badge blocked';
+                        badge.textContent = '🔴 BLOCKED';
+                        blockedCount++;
+                        if (category && category !== '—') {
+                            const rightSection = row.querySelector('.flex.items-center.gap-2.flex-shrink-0');
+                            const catTag = document.createElement('span');
+                            catTag.className = 'text-[9px] text-zinc-400 px-1.5 py-0.5 bg-zinc-800/50 rounded';
+                            catTag.textContent = category;
+                            rightSection?.insertBefore(catTag, rightSection.firstChild);
+                        }
+                    } else {
+                        row.classList.add('bg-successBg', 'border-successBorder');
+                        row.classList.remove('bg-zinc-900/50', 'border-zinc-800');
+                        badge.className = 'status-badge ok';
+                        badge.textContent = '🟢 OK';
+                        okCount++;
+                        if (category && category !== '—') {
+                            const rightSection = row.querySelector('.flex.items-center.gap-2.flex-shrink-0');
+                            const catTag = document.createElement('span');
+                            catTag.className = 'text-[9px] text-zinc-400 px-1.5 py-0.5 bg-zinc-800/50 rounded';
+                            catTag.textContent = category;
+                            rightSection?.insertBefore(catTag, rightSection.firstChild);
+                        }
+                    }
+                } else {
+                    const result = await pingUrl(url);
+                    const pingLatency = result.latency;
+                    timeCell.textContent = `${pingLatency}ms`;
+                    
+                    if (result.status === 'active') {
+                        row.classList.add('bg-successBg', 'border-successBorder');
+                        row.classList.remove('bg-zinc-900/50', 'border-zinc-800');
+                        badge.className = 'status-badge ok';
+                        badge.textContent = '🟢 ONLINE';
+                        okCount++;
+                    } else if (result.status === 'timeout') {
+                        row.classList.add('bg-dangerBg', 'border-dangerBorder');
+                        row.classList.remove('bg-zinc-900/50', 'border-zinc-800');
+                        badge.className = 'status-badge error';
+                        badge.textContent = '⏱️ TIMEOUT';
+                        errorCount++;
+                    } else if (result.status === 'cors') {
+                        row.classList.add('bg-dangerBg', 'border-dangerBorder');
+                        row.classList.remove('bg-zinc-900/50', 'border-zinc-800');
+                        badge.className = 'status-badge error';
+                        badge.textContent = '🛡️ CORS';
+                        errorCount++;
+                    } else {
+                        row.classList.add('bg-dangerBg', 'border-dangerBorder');
+                        row.classList.remove('bg-zinc-900/50', 'border-zinc-800');
+                        badge.className = 'status-badge error';
+                        badge.textContent = '🔴 OFFLINE';
+                        errorCount++;
+                    }
+                }
+
+                completed++;
+                const percent = Math.round((completed / total) * 100);
+                progressFillGreen.style.width = `${percent}%`;
+                progressPercent.textContent = `${percent}%`;
+                progressText.textContent = `Checking ${completed}/${total}...`;
+                currentTargetDisplay.textContent = `${completed}/${total}: ${url}`;
+                updateStats(completed, okCount, blockedCount, errorCount);
+            }
+
+            progressFillGreen.style.width = '100%';
+            progressPercent.textContent = '100%';
+            progressText.textContent = `✅ Complete!`;
+            currentTargetDisplay.textContent = `✅ Done! ${okCount} OK, ${blockedCount} BLOCKED${errorCount ? `, ${errorCount} errors` : ''}`;
+            updateStats(total, okCount, blockedCount, errorCount);
+            isChecking = false;
+        }
+
+        // ============================================================
+        //  CHECK ALL
+        // ============================================================
+        checkAllBtn.addEventListener('click', async () => {
+            if (runtimeLinks.length === 0) {
+                alert('No links to check! Add URLs first.');
+                return;
+            }
+            if (isChecking) return;
+            const urls = runtimeLinks.map(item => item.url);
+            await runCheck(urls);
+        });
+
+        // ============================================================
+        //  CLEAR
+        // ============================================================
+        clearBtn.addEventListener('click', () => {
+            resultsWrapper.classList.add('opacity-0', 'translate-y-2');
+            setTimeout(() => {
+                resultsWrapper.classList.add('hidden');
+                resultsList.innerHTML = '';
+                progressFillGreen.style.width = '0%';
+                progressPercent.textContent = '0%';
+                progressText.textContent = 'Awaiting Execution';
+                updateStats(0, 0, 0, 0);
+            }, 300);
+            customUrlInput.value = '';
+            currentTargetDisplay.textContent = 'awaiting...';
+        });
+
+        // ============================================================
+        //  FIREBASE SYNC – FIXED PERMISSION ERROR
+        // ============================================================
+        async function syncFirebase() {
+            syncBtn.innerHTML = '⏳';
+            syncBtn.disabled = true;
+            syncBtnMobile.innerHTML = '⏳';
+            syncBtnMobile.disabled = true;
+            
+            try {
+                // 🔥 READ FROM ALLOWED PATH – adjust '/sections' if your data is elsewhere
+                const snapshot = await database.ref('/sections').once('value');
+                const data = snapshot.val();
+                
+                if (data) {
+                    // Extract URLs from the data object
+                    const urls = extractLinksFromObject(data);
+                    let added = 0;
+                    urls.forEach(u => {
+                        if (!runtimeLinks.some(item => item.url === u)) {
+                            runtimeLinks.push({ url: u, origin: 'Firebase' });
+                            added++;
+                        }
+                    });
+                    renderLinksDisplay();
+                    alert(added > 0 ? `✅ Synced ${added} new URLs from Firebase!` : 'No new URLs found.');
+                } else {
+                    alert('No data found at /sections. Check your Firebase structure.');
+                }
+            } catch (e) {
+                console.error("Firebase Read Error:", e);
+                alert("Permission error – check rules and path.\n\nError: " + e.message);
+            }
+            
+            syncBtn.innerHTML = '🔄';
+            syncBtn.disabled = false;
+            syncBtnMobile.innerHTML = '🔄';
+            syncBtnMobile.disabled = false;
+        }
+
+        // ============================================================
+        //  TEST PROXY
+        // ============================================================
+        async function testProxy() {
+            testProxyBtn.innerHTML = '⏳';
+            testProxyBtn.disabled = true;
+            testProxyBtnMobile.innerHTML = '⏳';
+            testProxyBtnMobile.disabled = true;
+            try {
+                const response = await fetch(`${GL_API_BASE}/check?token=${GL_TOKEN}&url=glseries.net&filter=${FILTER}`);
+                if(response.ok) {
+                    const data = await response.json();
+                    const status = data.results ? data.results[FILTER] : null;
+                    alert(`✅ Proxy OK!\nBlocked: ${status?.blocked ? 'YES' : 'NO'}\nCategory: ${status?.category || 'N/A'}`);
+                } else {
+                    alert(`❌ API Error: HTTP ${response.status}`);
+                }
+            } catch(e) {
+                alert("❌ Proxy not running!\n\nRun: node proxy.js");
+            }
+            testProxyBtn.innerHTML = '🔌';
+            testProxyBtn.disabled = false;
+            testProxyBtnMobile.innerHTML = '🔌';
+            testProxyBtnMobile.disabled = false;
+        }
+
+        // ============================================================
+        //  INIT
+        // ============================================================
+        renderLinksDisplay();
+    </script>
+</body>
+</html>
