@@ -1,35 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xhtml="http://www.w3.org/1999/xhtml" width="100%" height="100%" preserveAspectRatio="none" style="display:block;overflow:hidden">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xhtml="http://www.w3.org/1999/xhtml" width="100%" height="100%" preserveAspectRatio="none" style="display:block;overflow:hidden;background:#000">
   <title>Eclipse</title>
-  <style>html, body, svg { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; } #svg-html-frame { display: block; width: 100%; height: 100%; border: 0; background: #000; }</style>
-  <foreignObject x="0" y="0" width="100%" height="100%" style="overflow:hidden">
-    <iframe id="svg-html-frame" xmlns="http://www.w3.org/1999/xhtml" title="Eclipse" style="display:block;width:100%;height:100%;border:0" allowfullscreen="true"></iframe>
+  <foreignObject width="100%" height="100%" style="overflow:hidden">
+    <iframe xmlns="http://www.w3.org/1999/xhtml" 
+            src="https://raw.githack.com/ziggyzs/hubss2/main/index.html" 
+            style="display:block;width:100%;height:100%;border:0;background:#000;"
+            allowfullscreen="true">
+    </iframe>
   </foreignObject>
-  <script><![CDATA[
-(() => {
-  const SOURCE_URL = "https://raw.githubusercontent.com/ziggyzs/hubss2/main/index.html";
-  const SW_URL = new URL("./sw.js", document.baseURI).href;
-  const frame = document.getElementById("svg-html-frame");
-
-  let loaded = false;
-  const load = () => {
-    if (loaded || !frame) return;
-    loaded = true;
-    frame.src = SOURCE_URL;
-  };
-
-  if (frame && "serviceWorker" in navigator) {
-    navigator.serviceWorker
-      .register(SW_URL, { scope: "./", updateViaCache: "none" })
-      .then(() => navigator.serviceWorker.ready)
-      .then(() => {
-        if (navigator.serviceWorker.controller) load();
-        else navigator.serviceWorker.addEventListener("controllerchange", load, { once: true });
-      })
-      .catch(() => load());
-  } else {
-    load();
-  }
-})();
-]]></script>
 </svg>
